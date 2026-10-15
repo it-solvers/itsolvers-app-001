@@ -11,7 +11,6 @@ import { BrandLogo } from '@/components/brand-logo';
 import { CoinLogo } from '@/components/coin-logo';
 import { ListRow } from '@/components/list-row';
 import { ScreenTop } from '@/components/screen-top';
-import { SiteFooter } from '@/components/site-footer';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BRANDS } from '@/constants/brands';
@@ -66,8 +65,6 @@ export default function BrandsScreen() {
           </ThemedView>
         }
       />
-      {/* 맨 아래: 회사 정보 푸터 (이 화면은 짧아서 화면 맨 아래에 붙여 둔다) */}
-      <SiteFooter />
     </ThemedView>
   );
 }
