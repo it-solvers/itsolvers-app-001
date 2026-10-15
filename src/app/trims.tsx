@@ -89,6 +89,9 @@ export default function TrimsScreen() {
                     brand: brand ?? '',
                     saleModelCode: item.saleModelCode,
                     title: priceTitle(carName, item),
+                    carName: carName ?? '',
+                    engineName: item.engineName,
+                    trimName: item.name,
                   },
                 })
               }

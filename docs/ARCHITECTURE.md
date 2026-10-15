@@ -37,11 +37,11 @@
 ## 4. 폴더 구조
 
 ```
-src/app/         화면과 라우팅 (파일 이름 = 주소). _layout.tsx(스택), index.tsx(제조사), cars.tsx(차종), trims.tsx(트림), price.tsx(가격)
-src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), load-status(로딩/오류), data-notice(데이터 기준일), 스플래시용 animated-icon
+src/app/         화면과 라우팅 (파일 이름 = 주소). _layout.tsx(스택), index.tsx(제조사), cars.tsx(차종), trims.tsx(트림), price.tsx(가격), summary.tsx(견적 확인)
+src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), section(제목이 붙은 구역), load-status(로딩/오류), data-notice(데이터 기준일), 스플래시용 animated-icon
 src/constants/   템플릿 테마 값, brands.ts(지원 제조사 목록)
 src/hooks/       use-load(화면 데이터 불러오기), use-option-selection(사양·옵션·색상 선택과 선택 규칙), 템플릿 훅(색상 테마 등)
-src/utils/       price.ts(가격 표시와 합계 계산), options.ts(옵션 선택 목록 변경 규칙)
+src/utils/       price.ts(가격 표시, 선택한 항목 목록, 합계 계산), options.ts(옵션 선택 목록 변경 규칙), trim.ts(트림 구매 용도)
 src/api/         제조사 사이트 호출 코드 (hyundai.ts). 화면에서 fetch를 직접 쓰지 않는다
 src/storage/     저장 코드. cache.ts(JSON 파일 저장, 하루 1회 규칙), vehicleData.ts(화면이 호출하는 getCars/getTrims/getTrimPrice)
 src/types/       공통 TypeScript 타입 (car.ts: 차종/트림/사양/옵션/색상/가격)
@@ -108,6 +108,7 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 | 2026-10-15 | 사용하지 않는 템플릿 파일 삭제 (승인) | 확정 |
 | 2026-10-15 | 미사용 패키지 5개 제거 (승인) | 확정 |
 | 2026-10-15 | 옵션 규칙 조회 실패 시: 변경을 적용하지 않고 오류 표시, 재시도는 다시 누르기 | 확정 |
+| 2026-10-15 | 견적 확인 화면 추가. 가격 화면에서 고른 내용(사양·옵션·색상 코드)을 화면 주소 값으로 넘기고, 견적 화면이 가격 데이터를 다시 불러(보통 오늘 저장본)와 같은 계산으로 보여줌. 선택 상태를 저장하거나 공유하지 않음 | 확정 |
 | 2026-10-15 | 개발 서버 포트 8082 | 확정 |
 | 2026-10-15 | `.git`: 생성 도구가 자동 생성한 저장소(Initial commit 1개)를 유지 | 임시 (변경 가능) |
 | 2026-10-15 | 앱 기능: 국내 승용차 가격 조회 (차량→트림→옵션). 1단계는 현대자동차 승용차만 | 확정 |

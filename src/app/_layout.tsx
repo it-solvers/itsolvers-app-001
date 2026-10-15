@@ -16,6 +16,7 @@ export default function RootLayout() {
         <Stack.Screen name="cars" options={{ title: '차종 선택' }} />
         <Stack.Screen name="trims" options={{ title: '트림 선택' }} />
         <Stack.Screen name="price" options={{ title: '가격 확인' }} />
+        <Stack.Screen name="summary" options={{ title: '견적 확인' }} />
       </Stack>
     </ThemeProvider>
   );
