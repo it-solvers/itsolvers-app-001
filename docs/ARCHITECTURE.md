@@ -12,7 +12,7 @@
 | 라우팅 | Expo Router `~57.0.27` (파일 기반, 라우트 루트 `src/app`) |
 | 패키지 관리자 | npm 11.19.1 |
 | 템플릿 | `create-expo-app` default 템플릿 (예제 화면 Home/Explore 포함) |
-| 데이터 저장 | 기기 내부 저장소. 가져온 가격 데이터를 JSON으로 저장 (방식 미결정, 6장) |
+| 데이터 저장 | 기기 내부 저장소. 가져온 가격 데이터를 JSON 파일로 저장 (`expo-file-system`, 6장) |
 | 백엔드/계정/분석 | 없음 (앱이 제조사 사이트 API를 직접 호출) |
 
 앱 이름은 `itsolvers-app-001` (`package.json` name, `app.json` name/slug/scheme). 프로젝트 폴더명도 동일하다.
@@ -42,7 +42,7 @@ src/components/  여러 화면에서 실제로 재사용하는 UI 조각
 src/constants/   템플릿 테마 값
 src/hooks/       템플릿 훅 (색상 테마 등)
 src/api/         제조사 사이트 호출 코드 (hyundai.ts). 화면에서 fetch를 직접 쓰지 않는다
-src/storage/     저장/조회 코드 (필요해질 때 생성)
+src/storage/     저장 코드. cache.ts(JSON 파일 저장, 하루 1회 규칙), vehicleData.ts(화면이 호출하는 getCars/getTrims/getTrimPrice)
 src/types/       공통 TypeScript 타입 (car.ts: 차종/트림/사양/옵션/색상/가격)
 assets/          이미지, 아이콘
 docs/            APP_SPEC.md, ARCHITECTURE.md
@@ -53,20 +53,37 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 ## 5. 데이터 흐름
 
 ```
-화면(src/app) → src/storage 함수(예정) → src/api(제조사 사이트) / 기기 내부 저장소
+화면(src/app) → src/storage/vehicleData → (오늘 저장본이 있으면) 기기 내부 JSON 파일
+                                         → (없거나 날짜가 지났으면) src/api(제조사 사이트) → 결과를 JSON 파일로 저장
 ```
 
 저장 실패는 `storage`에서 잡아 화면이 사용자에게 알릴 수 있는 형태로 돌려준다. 전역 상태 라이브러리는 도입하지 않는다.
 
-## 6. 저장 방식 선택 기준 (미결정)
+## 6. 저장 방식 (확정)
 
-기능과 데이터 모양이 정해진 뒤 결정한다. 설치는 `npx expo install`로 SDK 호환 버전을 사용한다.
+`expo-file-system`(`~57.0.7`)으로 앱 문서 폴더의 `price-cache/{key}.json`에 저장한다. 문서 폴더는 시스템이 저장 공간 부족 때 임의로 지우지 않는 위치다. 작은 JSON 몇 개라서 DB(expo-sqlite)나 AsyncStorage는 쓰지 않는다.
 
-| 데이터 특징 | 후보 |
+파일 형식: `{ "fetchedDate": "2026-10-15", "data": ... }` (`fetchedDate`는 기기 현지 날짜)
+
+| key | 내용 |
 |---|---|
-| 설정값, 소량의 단순 목록 | AsyncStorage |
-| 항목이 많고 검색/정렬/필터가 필요 | expo-sqlite |
-| 비밀번호 등 민감 정보 | 별도 검토 (expo-secure-store 등) |
+| `hyundai-cars` | 차종 목록 |
+| `hyundai-trims-{carCode}` | 차종별 트림 목록 |
+| `hyundai-price-{saleModelCode}` | 트림별 사양·옵션·색상 가격 |
+
+규칙 (`loadWithDailyCache`)
+
+1. `fetchedDate`가 오늘이면 저장본을 그대로 쓴다. 네트워크 호출 없음. (`source: 'cache'`)
+2. 저장본이 없거나 날짜가 지났으면 새로 가져와 저장한다. (`'network'`)
+3. 새로 가져오기에 실패하면 이전 저장본을 보여주고 `errorMessage`를 돌려준다. (`'stale-cache'`) 저장본도 없으면 오류를 던진다.
+4. 저장에 실패해도 가져온 데이터는 돌려준다. (`saveFailed: true`)
+5. 파일이 깨졌으면 없는 것으로 보고 새로 가져온다.
+
+한계
+
+- 백업/복구, 다른 기기로 옮기기는 지원하지 않는다. 앱을 삭제하면 저장본도 사라진다. 다시 열면 새로 가져온다.
+- 저장본 삭제/초기화 기능은 아직 없다. 만들 때는 결과를 사용자에게 명확히 알린다.
+- 저장본이 쌓이는 만큼 파일이 늘어난다(트림 하나당 1개). 오래된 파일 정리는 아직 하지 않는다.
 
 ## 7. 템플릿 정리 후보 (미결정, 승인 후 진행)
 
@@ -89,7 +106,7 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 | 2026-10-15 | 데이터 출처: 앱이 제조사 사이트에서 직접 스크랩(서버 없음) | 확정 |
 | 2026-10-15 | 흐름: 제조사 → 차종 → 트림 → 옵션(색상 포함). 가격은 참고용 문구 표시 | 확정 |
 | 2026-10-15 | 가격 데이터는 조건별로 하루 1회 가져와 로컬 JSON으로 저장, 새 조건은 실시간 조회 | 확정 |
-| - | JSON 저장 구현 방식(패키지, 저장 구조) | 미결정 |
+| 2026-10-15 | JSON 저장: `expo-file-system`, 앱 문서 폴더의 `price-cache/` (승인 후 설치) | 확정 |
 | - | 최소 OS 버전, 테스트 기기, 배포 방식 | 미결정 |
 | - | 데이터 백업/내보내기 | 미결정 |
 | - | eslint 설치 여부 | 미결정 (승인 필요) |
