@@ -121,6 +121,16 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 | - | 데이터 백업/내보내기 | 미결정 |
 | 2026-10-15 | eslint: 이미 설치되어 있음(`eslint`, `eslint-config-expo`). 새로 설치하지 않고 lint 오류만 수정 | 확정 |
 
+## 8-1. 웹 배포 (Vercel, 확인용)
+
+내용 확인용으로 웹 버전을 Vercel에 올릴 수 있다. 앱이 아니라 브라우저에서 보는 정적 사이트다.
+
+- 빌드: `npm run build:web` (= `expo export --platform web`) → `dist/`에 정적 파일 생성 (git 제외 대상)
+- 설정: `vercel.json`에 빌드 명령, 출력 폴더(`dist`), `cleanUrls`(`/cars` → `cars.html`)를 지정. 이 설정이 없으면 Vercel이 빌드 없이 `index.html`이 없는 곳을 보여줘서 404가 난다.
+- 현대자동차 API는 `access-control-allow-origin: *`를 보내고 이 앱은 단순 `GET`만 쓰므로, 브라우저에서 서버 중계 없이 직접 호출된다. (실제 브라우저 동작은 배포 후 확인 필요)
+- 웹에서는 `expo-file-system`이 지원되지 않아 "하루 1회 저장"이 동작하지 않는다(화면을 열 때마다 새로 불러오고, 저장 실패 안내가 보일 수 있음).
+- 공개 링크이므로 아는 사람에게만 공유하고, 확인이 끝나면 배포를 삭제한다. 제조사 사이트 이용약관은 아직 읽지 않았다.
+
 ## 9. 의도적으로 하지 않는 것
 
 - 서버, 로그인, 외부 분석/크래시 수집 서비스
