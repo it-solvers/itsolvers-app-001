@@ -51,6 +51,20 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 
 규칙: 화면은 보여주기와 사용자 동작만 담당하고, 저장은 `src/storage/` 함수를 호출한다. 같은 UI가 2곳 이상에서 쓰일 때만 `components/`로 분리한다. 경로 별칭 `@/`는 `src/`를 가리킨다.
 
+## 4-1. 코드 읽는 순서 (학습용 주석 안내)
+
+핵심 소스 22개에는 "왜 이렇게 했는지"와 React/TypeScript 개념(훅, 비동기, 제네릭 등)을 설명하는 주석이 달려 있다. 처음 읽는다면 아래 순서가 이해하기 쉽다.
+
+1. `src/types/car.ts`: 앱이 다루는 데이터의 모양 (차종 → 트림 → 가격)
+2. `src/api/hyundai.ts`: 제조사 사이트에서 데이터를 가져와 위 모양으로 바꾸는 곳
+3. `src/storage/cache.ts`, `src/storage/vehicleData.ts`: 하루 1회 저장 규칙
+4. `src/hooks/use-load.ts`: 화면이 데이터를 불러오고 상태(로딩/오류/완료)를 받는 방법
+5. `src/app/_layout.tsx` → `index.tsx` → `brands.tsx` → `cars.tsx` → `trims.tsx`: 화면 이동과 목록 화면
+6. `src/utils/price.ts`, `src/utils/options.ts`: 합계와 옵션 선택 계산(순수 함수)
+7. `src/hooks/use-option-selection.ts` → `src/app/price.tsx` → `src/app/summary.tsx`: 가장 복잡한 부분
+
+주석을 추가할 때 코드는 바꾸지 않았다. (주석을 제거하고 변환한 결과가 이전 커밋과 같은지 22개 파일 모두 확인함)
+
 ## 5. 데이터 흐름
 
 ```
