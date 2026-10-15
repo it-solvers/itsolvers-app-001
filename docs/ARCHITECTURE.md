@@ -240,3 +240,5 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 - 구현: `src/api/hyundai.ts`의 `fetchRequiredOptions`, `fetchOptionRules`, `fetchDisabledTuix`, 선택 상태는 `src/hooks/use-option-selection.ts`.
 - 실패 처리: 선택을 바꿀 때 위 API 조회가 하나라도 실패하면 그 변경을 적용하지 않고(이전 선택 유지) 하단에 오류를 표시한다. 다시 누르면 재시도한다. (검증하지 못한 조합이 합계에 들어가는 것을 막는 방식)
 - 확인하지 못한 것: 사이트가 선택 중에 띄우는 "함께 추가/삭제됩니다" 확인 팝업 단계(우리는 확인 없이 적용하고 안내 문구로 알림), 사이트의 옵션 해제 동작(우리는 묶음 코드 기준으로 함께 해제), `unityChoiceYn`이 `N`인 옵션(HUD, 20W)의 별도 처리, 튜익스 간 규칙을 색상별로 모두 훑어보지는 않음.
+
+- **공유 미리보기 기본값**: 링크 공유 시 설명과 회사 로고(og-image)가 나오도록 og/twitter 태그를 `_layout.tsx`의 기본 head에도 넣었다. 시작 화면 외의 화면 주소를 공유해도 미리보기가 나오며, 검색에는 계속 노출하지 않는다(noindex).

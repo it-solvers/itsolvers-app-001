@@ -23,7 +23,15 @@ import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { WebHead } from '@/components/web-head';
-import { DEFAULT_TITLE, FAVICON_URL, LANDING_TITLE } from '@/constants/site';
+import {
+  DEFAULT_TITLE,
+  FAVICON_URL,
+  LANDING_DESCRIPTION,
+  LANDING_TITLE,
+  OG_IMAGE_ALT,
+  OG_IMAGE_URL,
+  SITE_NAME,
+} from '@/constants/site';
 
 // 앱이 시작될 때 보이는 스플래시(로고) 화면을, 첫 화면이 준비될 때까지 자동으로 닫지 않고 붙잡아 둔다.
 SplashScreen.preventAutoHideAsync();
@@ -46,6 +54,19 @@ export default function RootLayout() {
         <title>{DEFAULT_TITLE}</title>
         <meta name="robots" content="noindex, nofollow" />
         <link rel="icon" href={FAVICON_URL} type="image/png" />
+        {/* 어느 화면 주소를 공유해도 설명과 회사 로고 미리보기가 나오도록 하는 기본값 (검색에는 노출하지 않음) */}
+        <meta name="description" content={LANDING_DESCRIPTION} />
+        <meta property="og:type" content="website" />
+        <meta property="og:locale" content="ko_KR" />
+        <meta property="og:site_name" content={SITE_NAME} />
+        <meta property="og:title" content={DEFAULT_TITLE} />
+        <meta property="og:description" content={LANDING_DESCRIPTION} />
+        <meta property="og:image" content={OG_IMAGE_URL} />
+        <meta property="og:image:alt" content={OG_IMAGE_ALT} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={DEFAULT_TITLE} />
+        <meta name="twitter:description" content={LANDING_DESCRIPTION} />
+        <meta name="twitter:image" content={OG_IMAGE_URL} />
       </WebHead>
       {/* 아래 name 은 파일 이름(확장자 제외)과 같아야 한다. options 로 각 화면의 제목줄을 정한다. */}
       {/*
