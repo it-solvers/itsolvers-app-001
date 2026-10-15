@@ -48,6 +48,11 @@ function toNumber(value: unknown, label: string): number {
   return n;
 }
 
+/** 색상 가격처럼 없을 수도 있는 값. 값이 없으면 추가 금액이 없는 것(0)으로 본다. 값이 있는데 숫자가 아니면 오류. */
+function toOptionalPrice(value: unknown, label: string): number {
+  return value === undefined || value === null ? 0 : toNumber(value, label);
+}
+
 function requireArray<T>(value: T[] | null | undefined, label: string): T[] {
   if (!Array.isArray(value)) {
     throw new HyundaiApiError(`응답 형식이 달라졌습니다. (${label})`);
@@ -94,13 +99,13 @@ export async function fetchTrims(carCode: string): Promise<Trim[]> {
 type InteriorColorItem = {
   interiorColorCode: string;
   interiorColorName: string;
-  interiorColorPrice: string;
+  interiorColorPrice?: string | null; // 일부 차종(아반떼)은 필드 자체가 없다
   choiceYn: string; // "Y"면 이 트림에서 선택 가능
 };
 type ExteriorColorItem = {
   exteriorColorCode: string;
   exteriorColorName: string;
-  exteriorColorPrice: string;
+  exteriorColorPrice?: string | null;
   choiceYn: string;
 };
 
@@ -165,7 +170,7 @@ export async function fetchTrimPrice(saleModelCode: string): Promise<TrimPrice> 
     .map((c) => ({
       code: c.interiorColorCode,
       name: c.interiorColorName,
-      price: toNumber(c.interiorColorPrice, c.interiorColorName),
+      price: toOptionalPrice(c.interiorColorPrice, c.interiorColorName),
     }));
 
   const exteriorColors: CarColor[] = requireArray(exterior, '외장 색상')
@@ -173,7 +178,7 @@ export async function fetchTrimPrice(saleModelCode: string): Promise<TrimPrice> 
     .map((c) => ({
       code: c.exteriorColorCode,
       name: c.exteriorColorName,
-      price: toNumber(c.exteriorColorPrice, c.exteriorColorName),
+      price: toOptionalPrice(c.exteriorColorPrice, c.exteriorColorName),
     }));
 
   return {

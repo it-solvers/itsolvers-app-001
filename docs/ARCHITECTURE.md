@@ -144,6 +144,8 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 | 4. 내장 색상 | `/interior-color/{saleModelCode}?saleModelCode=...` | `interiorColorPrice`, `choiceYn`(Y면 이 트림에서 선택 가능) |
 | 5. 외장 색상 | `/exterior-color/{saleModelCode}?siteTypeCode=&saleModelCode=...&interiorColorCode=&exteriorColorCode=` | `exteriorColorPrice`(예: 세레니티 화이트 펄 +100,000, 매트 +300,000), `choiceYn` |
 
+색상 가격 필드는 차종마다 다르다. 내장 색상 응답에서 쏘나타·그랜저는 `interiorColorPrice`가 "0" 같은 값으로 오지만, **아반떼(7개 트림)는 필드 자체가 없다**. 사이트 코드도 색상 가격이 없으면 0으로 처리하므로(`price||0`), 색상 가격이 없으면 0원으로 본다(`toOptionalPrice`). 기본 가격·옵션 가격은 값이 없거나 숫자가 아니면 오류로 처리한다. 모든 승용 차종·트림 44개를 한 번에 조회해 모두 성공하는 것을 확인했다(2026-10-15).
+
 가격 구조: 한 트림(`saleModelCode`) 안에 **사양 선택**(`classChoice`: 예 "기본" 28,760,000 / "인포테인먼트내비Ⅰ" 30,160,000 = +1,400,000)이 있고, 선택 옵션은 `saleSpecCode`("A,N" 등)로 어느 사양에서 고를 수 있는지 정해진다. 그래서 화면 흐름은 제조사 → 차종 → 트림 → **사양** → 옵션/색상이다. 합계 = 사양 가격 + 선택 옵션 + 색상 가격.
 
 확인된 예: 쏘나타 디 엣지(DN26) 가솔린 2.0 Premium(`DNJS4SBT8`) 기본 가격 28,760,000원, 선택 옵션 예 "하이패스" 200,000원.
