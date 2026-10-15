@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "20261015",
-    "slug": "20261015",
+    "name": "itsolvers-app-001",
+    "slug": "itsolvers-app-001",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "20261015",
+    "scheme": "itsolvers-app-001",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"

@@ -1,5 +1,5 @@
 {
-  "name": "20261015",
+  "name": "itsolvers-app-001",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
@@ -29,14 +29,16 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~57.0.2",
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --port 8082",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
+    "android": "expo start --android --port 8082",
+    "ios": "expo start --ios --port 8082",
+    "web": "expo start --web --port 8082",
     "lint": "expo lint"
   },
   "private": true
