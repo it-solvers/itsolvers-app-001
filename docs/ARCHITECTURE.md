@@ -92,9 +92,8 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 
 유지: 앱 아이콘/스플래시 이미지(`app.json`이 사용), `animated-icon`(스플래시), `expo.icon`.
 
-패키지 정리 후보 (코드에서 직접 import하지 않음. 제거는 승인 후 진행하며, 제거 전 `expo-doctor`와 두 플랫폼 실행으로 확인한다):
-- 템플릿 예제만 쓰던 것으로 보이는 패키지: `@expo/ui`, `expo-glass-effect`, `expo-symbols`, `expo-web-browser`, `expo-device`
-- 아래는 직접 import하지 않아도 Expo Router 등이 요구하므로 제거하지 않는다: `expo-constants`, `expo-linking`, `expo-font`, `expo-status-bar`, `expo-system-ui`, `react-native-screens`, `react-native-gesture-handler`, `react-dom`/`react-native-web`(웹 실행용)
+패키지 정리 (사용자 승인, 2026-10-15): 코드와 `app.json`에서 import하지 않던 `@expo/ui`, `expo-glass-effect`, `expo-symbols`, `expo-web-browser`, `expo-device`를 `npm uninstall`로 제거했다. 제거 후 `npx tsc --noEmit`, `npx expo-doctor`(21/21), Android·iOS 실행으로 확인했다.
+- 직접 import하지 않아도 Expo Router 등이 요구하므로 남긴 것: `expo-constants`, `expo-linking`, `expo-font`, `expo-status-bar`, `expo-system-ui`, `react-native-screens`, `react-native-gesture-handler`, `react-dom`/`react-native-web`(웹 실행용)
 - 실험 옵션 `reactCompiler: true`: 초보자 디버깅이 어려워질 수 있어 재검토. `typedRoutes: true`는 잘못된 화면 주소를 잡아 주므로 유지 권장.
 
 ## 8. 결정 기록
@@ -107,6 +106,8 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 | 2026-10-15 | 내비게이션: 탭 → 스택으로 교체. 템플릿 예제 화면(explore)과 탭 컴포넌트 삭제 (승인) | 확정 |
 | 2026-10-15 | 옵션 선택 규칙은 제조사 사이트와 동일하게 구현. 규칙은 선택할 때마다 실시간 조회하고 저장하지 않음 | 확정 |
 | 2026-10-15 | 사용하지 않는 템플릿 파일 삭제 (승인) | 확정 |
+| 2026-10-15 | 미사용 패키지 5개 제거 (승인) | 확정 |
+| 2026-10-15 | 옵션 규칙 조회 실패 시: 변경을 적용하지 않고 오류 표시, 재시도는 다시 누르기 | 확정 |
 | 2026-10-15 | 개발 서버 포트 8082 | 확정 |
 | 2026-10-15 | `.git`: 생성 도구가 자동 생성한 저장소(Initial commit 1개)를 유지 | 임시 (변경 가능) |
 | 2026-10-15 | 앱 기능: 국내 승용차 가격 조회 (차량→트림→옵션). 1단계는 현대자동차 승용차만 | 확정 |
@@ -171,4 +172,5 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 - `/options` 응답의 `choiceOptionGroupCodes`(예: HUD → "HUD,PA2")는 함께 묶이는 옵션이다. 해제할 때 묶여 있던 다른 옵션을 같이 해제하는 데 쓴다. 묶음 코드에 빠진 선행 옵션(아반떼 SDP→CV1)이 있어서, 선택할 때의 필수 옵션은 `option/del` 결과를 따른다.
 - 묶음 가격은 개별 가격의 합이다. (HUD 660,000 + PA2 650,000 = 1,310,000. `/option-mix-info`로 확인)
 - 구현: `src/api/hyundai.ts`의 `fetchRequiredOptions`, `fetchOptionRules`, `fetchDisabledTuix`, 선택 상태는 `src/hooks/use-option-selection.ts`.
+- 실패 처리: 선택을 바꿀 때 위 API 조회가 하나라도 실패하면 그 변경을 적용하지 않고(이전 선택 유지) 하단에 오류를 표시한다. 다시 누르면 재시도한다. (검증하지 못한 조합이 합계에 들어가는 것을 막는 방식)
 - 확인하지 못한 것: 사이트가 선택 중에 띄우는 "함께 추가/삭제됩니다" 확인 팝업 단계(우리는 확인 없이 적용하고 안내 문구로 알림), 사이트의 옵션 해제 동작(우리는 묶음 코드 기준으로 함께 해제), `unityChoiceYn`이 `N`인 옵션(HUD, 20W)의 별도 처리, 튜익스 간 규칙을 색상별로 모두 훑어보지는 않음.

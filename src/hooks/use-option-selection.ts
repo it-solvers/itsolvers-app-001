@@ -23,6 +23,8 @@ function initialSelection(price: TrimPrice): Selection {
  * - 옵션을 고를 때 함께 선택되어야 하는 옵션이 있으면 같이 선택한다.
  * - 지금 선택 상태에서 고를 수 없는 옵션은 disabledReasons에 사유와 함께 담는다.
  * - 규칙은 선택이 바뀔 때마다 제조사 사이트에서 실시간으로 조회한다. (저장하지 않음)
+ * - 규칙을 조회하지 못하면 선택을 바꾸지 않고(이전 상태 유지) 오류를 알린다. 다시 누르면 다시 시도한다.
+ *   확인되지 않은 조합이 합계에 들어가는 것을 막기 위해서다.
  */
 export function useOptionSelection(price: TrimPrice) {
   const [selection, setSelection] = useState<Selection>(() => initialSelection(price));
@@ -35,55 +37,47 @@ export function useOptionSelection(price: TrimPrice) {
   const nameOf = (code: string) => price.options.find((o) => o.code === code)?.name ?? code;
   const kindOf = (code: string) => price.options.find((o) => o.code === code)?.kind;
 
-  // next 선택에서 고를 수 없는 옵션을 조회한다. 튜익스는 선택돼 있어도 고를 수 없게 되면 해제한다.
+  // next 선택에서 고를 수 없는 옵션을 조회하고 선택을 적용한다.
+  // 튜익스는 선택돼 있어도 고를 수 없게 되면 해제한다. 조회에 실패하면 오류를 던지고 아무것도 바꾸지 않는다.
   const applySelection = async (next: Selection, notes: string[]) => {
     let current = next;
     let blocked: Record<string, string> = {};
-    try {
-      for (let round = 0; round < 3; round++) {
-        const choiceSelected = current.optionCodes.filter((c) => kindOf(c) === 'choice');
-        const tuixSelected = current.optionCodes.filter((c) => kindOf(c) === 'tuix');
-        const allTuix = price.options.filter((o) => o.kind === 'tuix').map((o) => o.code);
+    for (let round = 0; round < 3; round++) {
+      const choiceSelected = current.optionCodes.filter((c) => kindOf(c) === 'choice');
+      const tuixSelected = current.optionCodes.filter((c) => kindOf(c) === 'tuix');
+      const allTuix = price.options.filter((o) => o.kind === 'tuix').map((o) => o.code);
 
-        const [optionRules, disabledTuix] = await Promise.all([
-          choiceSelected.length > 0
-            ? fetchOptionRules(price.saleModelCode, current.specCode, choiceSelected)
-            : Promise.resolve({ disabled: [], enabled: [] }),
-          allTuix.length > 0
-            ? fetchDisabledTuix(price.saleModelCode, {
-                specCode: current.specCode,
-                selectedOptions: choiceSelected,
-                selectedTuix: tuixSelected,
-                allTuix,
-                exteriorCode: current.exteriorCode,
-                interiorCode: current.interiorCode,
-              })
-            : Promise.resolve([] as string[]),
-        ]);
+      const [optionRules, disabledTuix] = await Promise.all([
+        choiceSelected.length > 0
+          ? fetchOptionRules(price.saleModelCode, current.specCode, choiceSelected)
+          : Promise.resolve({ disabled: [], enabled: [] }),
+        allTuix.length > 0
+          ? fetchDisabledTuix(price.saleModelCode, {
+              specCode: current.specCode,
+              selectedOptions: choiceSelected,
+              selectedTuix: tuixSelected,
+              allTuix,
+              exteriorCode: current.exteriorCode,
+              interiorCode: current.interiorCode,
+            })
+          : Promise.resolve([] as string[]),
+      ]);
 
-        blocked = {};
-        for (const code of blockedChoiceCodes(price.options, current.specCode, current.optionCodes, optionRules)) {
-          blocked[code] = REASON_CHOICE;
-        }
-        for (const code of disabledTuix) blocked[code] = REASON_TUIX;
-
-        const dropped = tuixSelected.filter((code) => blocked[code]);
-        if (dropped.length === 0) break;
-        notes.push(`함께 고를 수 없어 선택이 해제됨: ${dropped.map(nameOf).join(', ')}`);
-        current = { ...current, optionCodes: current.optionCodes.filter((c) => !dropped.includes(c)) };
-      }
-      setRuleError(null);
-    } catch (error) {
       blocked = {};
-      setRuleError(
-        `옵션 선택 규칙을 확인하지 못했습니다. 실제로는 함께 고를 수 없는 조합일 수 있습니다. (${
-          error instanceof Error ? error.message : String(error)
-        })`,
-      );
+      for (const code of blockedChoiceCodes(price.options, current.specCode, current.optionCodes, optionRules)) {
+        blocked[code] = REASON_CHOICE;
+      }
+      for (const code of disabledTuix) blocked[code] = REASON_TUIX;
+
+      const dropped = tuixSelected.filter((code) => blocked[code]);
+      if (dropped.length === 0) break;
+      notes.push(`함께 고를 수 없어 선택이 해제됨: ${dropped.map(nameOf).join(', ')}`);
+      current = { ...current, optionCodes: current.optionCodes.filter((c) => !dropped.includes(c)) };
     }
     setSelection(current);
     setDisabledReasons(blocked);
     setMessage(notes.length > 0 ? notes.join('\n') : null);
+    setRuleError(null);
   };
 
   const run = useCallback(async (task: () => Promise<void>) => {
@@ -92,6 +86,12 @@ export function useOptionSelection(price: TrimPrice) {
     setBusy(true);
     try {
       await task();
+    } catch (error) {
+      setRuleError(
+        `옵션 조건을 확인하지 못해 선택을 바꾸지 않았습니다. 인터넷 연결을 확인하고 다시 눌러 주세요. (${
+          error instanceof Error ? error.message : String(error)
+        })`,
+      );
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -119,14 +119,12 @@ export function useOptionSelection(price: TrimPrice) {
         optionCodes = remaining;
         if (alsoRemoved.length > 0) notes.push(`함께 선택이 해제됨: ${alsoRemoved.map(nameOf).join(', ')}`);
       } else if (kindOf(code) === 'choice') {
-        let required: string[] = [];
-        try {
-          required = await fetchRequiredOptions(price.saleModelCode, selection.specCode, selection.optionCodes, code);
-        } catch (error) {
-          setRuleError(
-            `함께 선택해야 하는 옵션을 확인하지 못했습니다. (${error instanceof Error ? error.message : String(error)})`,
-          );
-        }
+        const required = await fetchRequiredOptions(
+          price.saleModelCode,
+          selection.specCode,
+          selection.optionCodes,
+          code,
+        );
         // 이 사양에서 고를 수 있는 옵션만 추가한다.
         const addable = required.filter((c) => {
           const option = price.options.find((o) => o.code === c);

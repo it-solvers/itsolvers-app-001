@@ -84,11 +84,6 @@ function PriceBody({ title, result }: { title: string; result: LoadResult<TrimPr
         <Section
           title="선택 옵션"
           hint={busy ? '옵션 선택 조건을 확인하는 중입니다...' : undefined}>
-          {ruleError ? (
-            <ThemedText type="small" style={styles.warning}>
-              {ruleError}
-            </ThemedText>
-          ) : null}
           {message ? (
             <ThemedText type="small" themeColor="textSecondary">
               {message}
@@ -147,6 +142,11 @@ function PriceBody({ title, result }: { title: string; result: LoadResult<TrimPr
       <ThemedView
         type="backgroundElement"
         style={[styles.footer, { paddingBottom: insets.bottom + Spacing.two, borderTopColor: theme.backgroundSelected }]}>
+        {ruleError ? (
+          <ThemedText type="small" style={styles.warning} accessibilityRole="alert">
+            {ruleError}
+          </ThemedText>
+        ) : null}
         <ThemedView type="backgroundElement" style={styles.totalRow}>
           <ThemedText type="smallBold">합계</ThemedText>
           <ThemedText type="subtitle" accessibilityLabel={`합계 ${formatPrice(breakdown.total)}`}>
