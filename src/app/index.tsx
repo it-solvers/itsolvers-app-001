@@ -29,7 +29,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 const STRUCTURED_DATA = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
-  name: '승용차 견적 확인 (학습용)',
+  name: '리스료 견적 (학습용)',
   url: `${SITE_URL}/`,
   description: LANDING_DESCRIPTION,
   inLanguage: 'ko',
@@ -96,7 +96,7 @@ export default function LandingScreen() {
         contentContainerStyle={styles.scroll}>
         <ThemedView style={styles.hero}>
           <ThemedText type="subtitle" style={styles.heading}>
-            승용차 <Text style={styles.accent}>견적</Text> 확인
+            리스료 <Text style={styles.accent}>견적</Text>
           </ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.centerText}>
             제조사, 차종, 트림, 옵션을 골라 가격을 확인해 볼 수 있습니다.

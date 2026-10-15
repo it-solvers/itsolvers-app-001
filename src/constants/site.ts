@@ -12,13 +12,13 @@ export const SITE_URL = 'https://itsolvers-app-001.vercel.app';
 export const SITE_NAME = '아이티해결단 (IT Solvers)';
 
 // 브라우저 탭과 검색 결과에 보이는 제목. 시작 화면만 검색에 노출되므로 LANDING_* 이 실제 검색 결과에 쓰인다.
-export const LANDING_TITLE = '승용차 견적 확인 (학습용) | 아이티해결단';
+export const LANDING_TITLE = '리스료 견적 (학습용) | 아이티해결단';
 export const LANDING_DESCRIPTION =
   '제조사·차종·트림·옵션을 골라 승용차 가격을 확인해 보는 학습용 웹앱입니다. 금액과 데이터는 정확하지 않을 수 있습니다.';
-export const LANDING_KEYWORDS = '승용차 견적, 자동차 가격, 트림 옵션 가격, 아이티해결단, IT Solvers, 학습용';
+export const LANDING_KEYWORDS = '리스료 견적, 승용차 견적, 자동차 가격, 트림 옵션 가격, 아이티해결단, IT Solvers, 학습용';
 
 // 시작 화면이 아닌 화면의 기본 제목 (이 화면들은 검색에 노출하지 않지만 탭 제목은 필요하다)
-export const DEFAULT_TITLE = '승용차 견적 확인 (학습용)';
+export const DEFAULT_TITLE = '리스료 견적 (학습용)';
 
 // 파비콘과 공유 미리보기 이미지 (public/images/ 에 있는 파일. 아이티해결단 사이트의 이미지와 같은 파일)
 export const FAVICON_URL = '/images/logo.png';
