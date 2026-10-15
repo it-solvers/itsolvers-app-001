@@ -1,10 +1,13 @@
 // ============================================================================
-// 시작 화면 맨 위의 헤더. 아이티해결단 회사 사이트(index.html)의 헤더를 따랐다.
-//   왼쪽: 로고 이미지 + "아이티해결단" 글자   오른쪽: 회사 사이트로 가는 링크
-// 흰 배경(다크 모드에서는 어두운 배경)과 아래쪽 얇은 선도 회사 사이트와 같은 느낌으로 맞췄다.
+// 모든 화면 맨 위의 헤더. 아이티해결단 회사 사이트(index.html)의 헤더를 따랐다.
+//   왼쪽: (돌아갈 화면이 있으면 뒤로 가기 버튼) + 로고 이미지 + "아이티해결단" 글자
+//   오른쪽: 회사 사이트로 가는 링크
+// 앱 기본 제목줄을 쓰지 않는 화면에서는 이 헤더가 뒤로 가기 버튼 역할도 한다. (showBack)
+// 흰 배경과 아래쪽 얇은 선도 회사 사이트와 같은 느낌으로 맞췄다.
 // ============================================================================
 
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,8 +18,11 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 // 로고 이미지가 불투명한 흰 배경이라서, 어두운 배경 위에 놓으면 흰 상자가 튀어 보이기 때문에 같은 방식을 따랐다.
 const COLORS = { background: '#ffffff', border: '#e5e7eb', text: '#101828', link: '#475467' } as const;
 
-export function SiteHeader() {
+export function SiteHeader({ showBack = false }: { showBack?: boolean }) {
   const colors = COLORS;
+  const router = useRouter();
+  // 돌아갈 이전 화면이 있을 때만 뒤로 가기 버튼을 보여준다. (주소를 직접 열어 들어온 첫 화면에는 없다)
+  const canGoBack = showBack && router.canGoBack();
   // 노치(카메라 구멍)와 상태바에 가려지지 않도록 위쪽 안전 영역만큼 비운다.
   const insets = useSafeAreaInsets();
 
@@ -27,6 +33,15 @@ export function SiteHeader() {
         { paddingTop: insets.top, backgroundColor: colors.background, borderBottomColor: colors.border },
       ]}>
       <View style={styles.inner}>
+        {canGoBack ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="뒤로 가기"
+            onPress={() => router.back()}
+            style={styles.backButton}>
+            <Text style={[styles.backText, { color: colors.text }]}>‹</Text>
+          </Pressable>
+        ) : null}
         {/* 로고와 회사 이름. 누르면 회사 사이트가 열린다 (회사 사이트에서는 메인으로 이동하는 로고다) */}
         <Pressable
           accessibilityRole="link"
@@ -67,7 +82,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  logo: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 },
+  logo: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, flex: 1 },
+  // 누르기 쉬운 크기(44 이상)의 뒤로 가기 버튼
+  backButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginLeft: -Spacing.two },
+  backText: { fontSize: 32, lineHeight: 36, fontWeight: 300 },
   logoImage: { height: 40, aspectRatio: 7 / 4 },
   logoText: { fontSize: 18, fontWeight: 800, letterSpacing: -0.8 },
   linkButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.two },

@@ -14,7 +14,7 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DataNotice } from '@/components/data-notice';
@@ -22,7 +22,9 @@ import { LoadStatus } from '@/components/load-status';
 import { RemoteImage } from '@/components/remote-image';
 import { Section } from '@/components/section';
 import { SelectRow } from '@/components/select-row';
-import { PriceDisclaimer, StudyNotice } from '@/components/study-notice';
+import { PageFooter } from '@/components/page-footer';
+import { ScreenTop } from '@/components/screen-top';
+import { PriceDisclaimer } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -71,8 +73,12 @@ export default function PriceScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: '가격 확인' }} />
-      {/* 모든 화면 위쪽에 보이는 "학습용" 안내 배너 (불러오는 중이나 오류일 때도 보인다) */}
-      <StudyNotice />
+      {/*
+        불러오는 중이거나 오류일 때만 여기에 로고 헤더(뒤로 가기 포함) + "학습용" 배너 + 화면 제목을 보여준다.
+        데이터가 준비되면(ready) 같은 묶음을 PriceBody 의 스크롤 안으로 옮겨서, 선택 목록이 넓게 보이게 한다.
+        (이 화면은 아래에 합계 영역이 고정되어 있어서, 위쪽까지 고정하면 선택 목록이 너무 좁아진다)
+      */}
+      {state.status !== 'ready' ? <ScreenTop title="가격 확인" /> : null}
       <LoadStatus
         state={state}
         loadingText="가격을 불러오는 중입니다."
@@ -121,7 +127,14 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
       {/* 위쪽: 스크롤되는 선택 목록 */}
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={[styles.scroll, { paddingBottom: Spacing.four }]}>
+        // 맨 위 묶음(헤더, 배너, 제목)이 스크롤 내용의 일부라서 위쪽 여백과 좌우 여백은 각 부분이 직접 갖는다
+        contentContainerStyle={[styles.scroll, { paddingBottom: 0 }]}
+        // 맨 위 묶음(0번째 항목)만 스크롤할 때 위로 올라가 사라지게 둔다
+        >
+        {/* 맨 위 묶음: 로고 헤더(뒤로 가기 포함) + "학습용" 배너 + 화면 제목. 좌우 여백을 되돌려 화면 가로를 꽉 채운다 */}
+        <View style={styles.topBleed}>
+          <ScreenTop title="가격 확인" />
+        </View>
         {/* 선택한 차종의 이미지 (흰 바탕 위). 이미지가 없는 차종이면 빈 자리만 남는다 */}
         <ThemedView style={styles.carImageArea}>
           <RemoteImage uri={carImageUrl(trim.car)} label={trim.carName} style={styles.carImage} />
@@ -211,6 +224,8 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
             />
           ))}
         </Section>
+        {/* 스크롤 내용의 맨 끝: 회사 정보 푸터 */}
+        <PageFooter />
       </ScrollView>
 
       {/* 아래쪽: 스크롤과 상관없이 항상 보이는 합계 영역 (오류 안내, 합계, 차량 선택 완료 버튼, 참고용 문구) */}
@@ -281,7 +296,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: Spacing.two,
   },
-  carImage: { width: '100%', height: 150 },
+  carImage: { width: '100%', height: 110 },
+  // 스크롤 내용의 좌우·위 여백(Spacing.three)을 되돌려서 헤더와 배너가 화면 가로를 꽉 채우게 한다
+  topBleed: { marginHorizontal: -Spacing.three, marginTop: -Spacing.three },
   warning: { color: '#c0392b' },
   footer: {
     paddingHorizontal: Spacing.three,

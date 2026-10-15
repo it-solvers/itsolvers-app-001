@@ -9,13 +9,13 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { SectionList, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DataNotice } from '@/components/data-notice';
 import { ListRow } from '@/components/list-row';
 import { LoadStatus } from '@/components/load-status';
 import { RemoteImage } from '@/components/remote-image';
-import { StudyNotice } from '@/components/study-notice';
+import { PageFooter } from '@/components/page-footer';
+import { ScreenTop } from '@/components/screen-top';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -53,7 +53,6 @@ export default function TrimsScreen() {
   // 차종 화면이 넘긴 값들. car 는 트림을 조회하는 열쇠이고, brand 와 carName 은 다음 화면으로 그대로 이어서 넘긴다.
   const { brand, car, carName } = useLocalSearchParams<{ brand?: string; car?: string; carName?: string }>();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   // car 가 바뀌면(다른 차종으로 들어오면) 새 함수가 만들어져서 useLoad 가 다시 불러온다.
   const load = useCallback(() => getTrims(car ?? ''), [car]);
   const { state, retry } = useLoad(load);
@@ -75,8 +74,8 @@ export default function TrimsScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: carName ?? '트림 선택' }} />
-      {/* 모든 화면 위쪽에 보이는 "학습용" 안내 배너 */}
-      <StudyNotice />
+      {/* 맨 위: 로고 헤더(뒤로 가기 포함) + "학습용" 배너 + 화면 제목 */}
+      <ScreenTop title={`${carName ?? ''} 트림 선택`.trim()} />
       <LoadStatus
         state={state}
         loadingText="트림을 불러오는 중입니다."
@@ -90,7 +89,7 @@ export default function TrimsScreen() {
           sections={sections}
           keyExtractor={(trim) => trim.saleModelCode}
           contentInsetAdjustmentBehavior="automatic"
-          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + Spacing.four }]}
+          contentContainerStyle={[styles.list, { paddingBottom: 0 }]}
           stickySectionHeadersEnabled={false}
           ItemSeparatorComponent={() => <ThemedView style={styles.separator} />}
           renderSectionHeader={({ section }) => (
@@ -133,6 +132,8 @@ export default function TrimsScreen() {
               <DataNotice result={state.result} />
             </ThemedView>
           }
+          // 목록 맨 끝: 회사 정보 푸터
+          ListFooterComponent={<PageFooter />}
           ListEmptyComponent={
             <ThemedText themeColor="textSecondary">표시할 트림이 없습니다.</ThemedText>
           }

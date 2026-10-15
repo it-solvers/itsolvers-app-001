@@ -6,11 +6,11 @@
 
 import { useRouter } from 'expo-router';
 import { FlatList, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BrandLogo } from '@/components/brand-logo';
 import { ListRow } from '@/components/list-row';
-import { StudyNotice } from '@/components/study-notice';
+import { ScreenTop } from '@/components/screen-top';
+import { SiteFooter } from '@/components/site-footer';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BRANDS } from '@/constants/brands';
@@ -18,12 +18,11 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 
 export default function BrandsScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
 
   return (
     <ThemedView style={styles.container}>
-      {/* 모든 화면 위쪽에 보이는 "학습용" 안내 배너 */}
-      <StudyNotice />
+      {/* 맨 위: 로고 헤더(뒤로 가기 포함) + "학습용" 배너 + 화면 제목 */}
+      <ScreenTop title="제조사 선택" />
       {/*
         FlatList: 긴 목록을 효율적으로 그리는 도구. 화면에 보이는 항목만 그려서 항목이 많아도 가볍다.
           data                  보여줄 배열
@@ -36,7 +35,7 @@ export default function BrandsScreen() {
         data={BRANDS}
         keyExtractor={(brand) => brand.id}
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + Spacing.four }]}
+        contentContainerStyle={[styles.list, { paddingBottom: Spacing.four }]}
         ItemSeparatorComponent={() => <ThemedView style={styles.separator} />}
         renderItem={({ item }) => (
           <ListRow
@@ -53,6 +52,8 @@ export default function BrandsScreen() {
           </ThemedText>
         }
       />
+      {/* 맨 아래: 회사 정보 푸터 (이 화면은 짧아서 화면 맨 아래에 붙여 둔다) */}
+      <SiteFooter />
     </ThemedView>
   );
 }

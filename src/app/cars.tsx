@@ -12,12 +12,12 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { FlatList, StyleSheet, useWindowDimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CarCard } from '@/components/car-card';
 import { DataNotice } from '@/components/data-notice';
 import { LoadStatus } from '@/components/load-status';
-import { StudyNotice } from '@/components/study-notice';
+import { PageFooter } from '@/components/page-footer';
+import { ScreenTop } from '@/components/screen-top';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { findBrand } from '@/constants/brands';
@@ -32,7 +32,6 @@ export default function CarsScreen() {
   const { brand: brandParam } = useLocalSearchParams<{ brand?: string }>();
   const brand = findBrand(brandParam);
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   // 화면 폭이 넓으면(태블릿, 웹) 카드를 2열로, 좁으면(폰) 1열로 보여준다.
   const { width } = useWindowDimensions();
   const numColumns = width >= 700 ? 2 : 1;
@@ -55,8 +54,8 @@ export default function CarsScreen() {
     <ThemedView style={styles.container}>
       {/* 제목줄 글자를 이 화면 안에서 동적으로 정한다 (제조사 이름이 들어간다) */}
       <Stack.Screen options={{ title: `${brand.name} 차종` }} />
-      {/* 모든 화면 위쪽에 보이는 "학습용" 안내 배너 */}
-      <StudyNotice />
+      {/* 맨 위: 로고 헤더(뒤로 가기 포함) + "학습용" 배너 + 화면 제목 */}
+      <ScreenTop title={`${brand.name} 차종 선택`} />
       {/* 불러오는 중이거나 오류일 때만 무언가를 그리고, 완료(ready)면 아무것도 그리지 않는다 */}
       <LoadStatus
         state={state}
@@ -74,7 +73,7 @@ export default function CarsScreen() {
           numColumns={numColumns}
           columnWrapperStyle={numColumns > 1 ? styles.columnRow : undefined}
           contentInsetAdjustmentBehavior="automatic"
-          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + Spacing.four }]}
+          contentContainerStyle={[styles.list, { paddingBottom: 0 }]}
           ItemSeparatorComponent={() => <ThemedView style={styles.separator} />}
           renderItem={({ item }) => (
             // 카드 하나. 2열일 때는 두 카드가 같은 폭을 나눠 가진다(flex: 1).
@@ -100,6 +99,8 @@ export default function CarsScreen() {
             </ThemedView>
           }
           // 목록이 비었을 때 보여줄 것
+          // 목록 맨 끝: 회사 정보 푸터
+          ListFooterComponent={<PageFooter />}
           ListEmptyComponent={
             <ThemedText themeColor="textSecondary">표시할 차종이 없습니다.</ThemedText>
           }

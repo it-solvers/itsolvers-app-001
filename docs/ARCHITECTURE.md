@@ -37,8 +37,8 @@
 ## 4. 폴더 구조
 
 ```
-src/app/         화면과 라우팅 (파일 이름 = 주소). +html.tsx(웹 HTML 틀), _layout.tsx(스택), index.tsx(시작/랜딩), brands.tsx(제조사), cars.tsx(차종), trims.tsx(트림), price.tsx(가격), summary.tsx(차량 선택 완료)
-src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), section(제목이 붙은 구역), load-status(로딩/오류), data-notice(데이터 기준일), study-notice("학습용" 안내 배너와 하단 문구), web-head(웹 head 지정), car-card(차량 카드), brand-logo(제조사 엠블럼), color-dot(색상 동그라미), remote-image(인터넷 이미지), amount-input(숫자 입력 칸), percent-chips(비율 버튼), 스플래시용 animated-icon
+src/app/         화면과 라우팅 (파일 이름 = 주소). 앱 기본 제목줄은 쓰지 않고 로고 헤더가 대신한다. +html.tsx(웹 HTML 틀), _layout.tsx(스택), index.tsx(시작/랜딩), brands.tsx(제조사), cars.tsx(차종), trims.tsx(트림), price.tsx(가격), summary.tsx(차량 선택 완료)
+src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), section(제목이 붙은 구역), load-status(로딩/오류), data-notice(데이터 기준일), study-notice("학습용" 안내 배너와 하단 문구), web-head(웹 head 지정), site-header/site-footer/screen-top/page-footer(공통 헤더·푸터 틀), car-card(차량 카드), brand-logo(제조사 엠블럼), color-dot(색상 동그라미), remote-image(인터넷 이미지), amount-input(숫자 입력 칸), percent-chips(비율 버튼), 스플래시용 animated-icon
 src/constants/   템플릿 테마 값, brands.ts(지원 제조사 목록), site.ts(웹 검색/공유 정보), notices.ts(학습용 안내 문구)
 src/hooks/       use-load(화면 데이터 불러오기), use-option-selection(사양·옵션·색상 선택과 선택 규칙), 템플릿 훅(색상 테마 등)
 src/utils/       price.ts(가격 표시, 선택한 항목 목록, 합계 계산), options.ts(옵션 선택 목록 변경 규칙), trim.ts(트림 구매 용도), lease.ts(리스료 계산과 입력 글자 정리), images.ts(제조사 이미지 주소)
@@ -128,6 +128,7 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 | 2026-10-15 | 웹 SEO: 시작 화면만 검색 노출, 나머지 noindex. 파비콘·공유 이미지는 회사 사이트(`itsolvers/web/html`) 기준 | 확정 |
 | 2026-10-15 | 차량 선택 완료 화면: 합계 고정 영역을 없애고 차량 정보 마지막에 "차량가격", 아래에 리스료 계산(기간·선납금·보증금·잔존가치·금리 → 월 납입금액). 회사 사이트 계산식 기반 | 확정 |
 | 2026-10-15 | 차종 목록은 카드(큰 이미지), 제조사 엠블럼, 색상 이름 앞 동그라미를 제조사 사이트 이미지로 표시 | 확정 |
+| 2026-10-15 | 모든 화면에 시작 화면과 같은 로고 헤더와 푸터 적용. 앱 기본 제목줄은 끄고(`headerShown: false`) 헤더에 뒤로 가기 버튼, 헤더 아래에 화면 제목을 둠. 웹 파비콘은 모든 페이지 회사 로고 | 확정 |
 | 2026-10-15 | 개발 서버 포트 8082 | 확정 |
 | 2026-10-15 | `.git`: 생성 도구가 자동 생성한 저장소(Initial commit 1개)를 유지 | 임시 (변경 가능) |
 | 2026-10-15 | 앱 기능: 국내 승용차 가격 조회 (차량→트림→옵션). 1단계는 현대자동차 승용차만 | 확정 |

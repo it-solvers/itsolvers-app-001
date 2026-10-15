@@ -48,15 +48,16 @@ export default function RootLayout() {
         <link rel="icon" href={FAVICON_URL} type="image/png" />
       </WebHead>
       {/* 아래 name 은 파일 이름(확장자 제외)과 같아야 한다. options 로 각 화면의 제목줄을 정한다. */}
-      <Stack>
-        {/*
-          시작 화면은 제목줄을 숨긴다(headerShown: false).
-          title 은 앱에서는 보이지 않지만, 웹에서는 화면 이동 시스템이 브라우저 탭 제목으로 쓰기 때문에
-          검색용 제목과 같게 맞춰 둔다. (비워 두면 탭 제목이 "index"로 바뀔 수 있다)
-          headerBackTitle: 다음 화면(제조사 선택)의 뒤로 가기 버튼 글자. (iOS에서 긴 제목이 그대로 보이지 않게 짧게 지정)
-        */}
-        <Stack.Screen name="index" options={{ headerShown: false, title: LANDING_TITLE }} />
-        <Stack.Screen name="brands" options={{ title: '제조사 선택', headerBackTitle: '처음' }} />
+      {/*
+        앱 기본 제목줄은 쓰지 않는다(headerShown: false). 모든 화면이 로고 헤더(components/site-header.tsx)를
+        공통 헤더로 쓰고, 뒤로 가기 버튼과 화면 제목도 그 안(components/screen-top.tsx)에서 보여준다.
+        아래 title 은 화면에는 보이지 않고, 웹에서 브라우저 탭 제목으로만 쓰인다.
+        (시작 화면은 검색용 제목, 나머지는 화면 이름)
+        iOS 에서는 화면 왼쪽 끝을 밀어서 뒤로 가는 동작이 제목줄이 없어도 그대로 된다.
+      */}
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" options={{ title: LANDING_TITLE }} />
+        <Stack.Screen name="brands" options={{ title: '제조사 선택' }} />
         <Stack.Screen name="cars" options={{ title: '차종 선택' }} />
         <Stack.Screen name="trims" options={{ title: '트림 선택' }} />
         <Stack.Screen name="price" options={{ title: '가격 확인' }} />

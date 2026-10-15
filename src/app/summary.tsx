@@ -26,7 +26,9 @@ import { LoadStatus } from '@/components/load-status';
 import { PercentChips } from '@/components/percent-chips';
 import { RemoteImage } from '@/components/remote-image';
 import { Section } from '@/components/section';
-import { PriceDisclaimer, StudyNotice } from '@/components/study-notice';
+import { PageFooter } from '@/components/page-footer';
+import { ScreenTop } from '@/components/screen-top';
+import { PriceDisclaimer } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { findBrand } from '@/constants/brands';
@@ -95,8 +97,8 @@ export default function SummaryScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: '차량 선택 완료' }} />
-      {/* 모든 화면 위쪽에 보이는 "학습용" 안내 배너 */}
-      <StudyNotice />
+      {/* 맨 위: 로고 헤더(뒤로 가기 포함) + "학습용" 배너 + 화면 제목 */}
+      <ScreenTop title="차량 선택 완료" />
       <LoadStatus
         state={state}
         loadingText="견적을 불러오는 중입니다."
@@ -225,6 +227,8 @@ function SummaryBody({
 
         {/* 금액이 보이는 화면에는 항상 "학습용" 안내를 눈에 띄는 색으로 함께 보여준다 (문구는 constants/notices.ts) */}
         <PriceDisclaimer />
+        {/* 스크롤 내용의 맨 끝: 회사 정보 푸터 */}
+        <PageFooter />
       </ScrollView>
     </>
   );
@@ -431,7 +435,7 @@ const styles = StyleSheet.create({
   scroll: {
     padding: Spacing.three,
     gap: Spacing.three,
-    paddingBottom: Spacing.six,
+    paddingBottom: 0,
     maxWidth: MaxContentWidth,
     width: '100%',
     alignSelf: 'center',
