@@ -12,6 +12,7 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useLoad } from '@/hooks/use-load';
 import { getTrims } from '@/storage/vehicleData';
 import type { Trim } from '@/types/car';
+import { trimPurposeName } from '@/utils/trim';
 
 type Section = { title: string; data: Trim[] };
 
@@ -24,6 +25,13 @@ function groupByEngine(trims: Trim[]): Section[] {
     sections.set(trim.engineCode, section);
   }
   return [...sections.values()];
+}
+
+// 가격 화면 제목. 자가용이 아닌 트림은 용도를 덧붙여 구분한다.
+function priceTitle(carName: string | undefined, trim: Trim): string {
+  const purpose = trimPurposeName(trim.saleModelCode);
+  const suffix = purpose && purpose !== '자가용' ? ` (${purpose})` : '';
+  return `${carName ?? ''} ${trim.engineName} ${trim.name}${suffix}`.trim();
 }
 
 export default function TrimsScreen() {
@@ -70,15 +78,17 @@ export default function TrimsScreen() {
           renderItem={({ item }) => (
             <ListRow
               title={item.name}
-              // 같은 이름의 트림이 있어서 구분용으로 모델 코드를 함께 보여준다.
-              subtitle={`모델 코드 ${item.saleModelCode}`}
+              // 같은 이름의 트림이 있어서(자가용/장애인용 등) 구매 용도와 모델 코드를 함께 보여준다.
+              subtitle={[trimPurposeName(item.saleModelCode), `모델 코드 ${item.saleModelCode}`]
+                .filter(Boolean)
+                .join(' · ')}
               onPress={() =>
                 router.push({
                   pathname: '/price',
                   params: {
                     brand: brand ?? '',
                     saleModelCode: item.saleModelCode,
-                    title: `${carName ?? ''} ${item.engineName} ${item.name}`.trim(),
+                    title: priceTitle(carName, item),
                   },
                 })
               }
