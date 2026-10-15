@@ -26,8 +26,8 @@
 export const LEASE_TERMS = [12, 24, 36, 48, 60] as const;
 export type LeaseTerm = (typeof LEASE_TERMS)[number];
 
-/** 선납금, 보증금, 잔존가치에서 고를 수 있는 비율(%). 차량가격에 곱해서 금액을 채운다. */
-export const LEASE_PERCENTS = [5, 10, 15, 20, 25, 30] as const;
+/** 선납금, 보증금, 잔존가치 슬라이더에서 고를 수 있는 비율(%). 0%는 "선택 안 함"이다. 차량가격에 곱해서 금액을 정한다. */
+export const LEASE_PERCENTS = [0, 5, 10, 15, 20, 25, 30] as const;
 
 /** 차량가격의 percent% 금액(원 단위 반올림). 예: percentAmount(28_760_000, 10) → 2876000 */
 export function percentAmount(vehiclePrice: number, percent: number): number {
@@ -119,4 +119,17 @@ export function cleanRateText(text: string): string {
 export function parseNumberText(text: string, fallback = 0): number {
   if (text.trim() === '' || text === '.') return fallback;
   return Number(text);
+}
+
+/**
+ * 슬라이더에서 손가락(또는 마우스)이 놓인 가로 위치를, 가장 가까운 눈금의 번호로 바꾼다.
+ *   x      슬라이더 막대 안에서의 가로 위치(픽셀). 막대 밖이면 끝 눈금으로 맞춘다.
+ *   width  막대의 가로 길이(픽셀)
+ *   count  눈금의 개수
+ * 예) 눈금 7개(0~6번), 막대 길이 300 → x=0은 0번, x=150은 3번, x=300은 6번
+ */
+export function snapIndex(x: number, width: number, count: number): number {
+  if (count <= 1 || !(width > 0)) return 0;
+  const ratio = Math.min(1, Math.max(0, x / width)); // 0~1 사이로 제한
+  return Math.round(ratio * (count - 1));
 }

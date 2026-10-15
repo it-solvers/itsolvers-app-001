@@ -23,12 +23,10 @@ import { BrandLogo } from '@/components/brand-logo';
 import { ColorDot } from '@/components/color-dot';
 import { DataNotice } from '@/components/data-notice';
 import { LoadStatus } from '@/components/load-status';
-import { PercentChips } from '@/components/percent-chips';
+import { PercentSlider } from '@/components/percent-slider';
 import { RemoteImage } from '@/components/remote-image';
 import { Section } from '@/components/section';
-import { PageFooter } from '@/components/page-footer';
-import { ScreenTop } from '@/components/screen-top';
-import { PriceDisclaimer } from '@/components/study-notice';
+import { PriceDisclaimer, StudyNotice } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { findBrand } from '@/constants/brands';
@@ -52,6 +50,7 @@ import { trimPurposeName } from '@/utils/trim';
 
 // 가격 화면이 주소로 넘겨주는 값들. 주소 값은 글자만 가능하므로 모두 string 이고, 없을 수도 있다(?).
 type Params = {
+  manual?: string; // "1" 이면 차량을 고르지 않고 차량가격을 직접 입력하는 모드 (제조사 선택 화면의 "차량가격 직접 입력")
   brand?: string;
   car?: string; // 차종 코드 (이미지 주소를 만드는 데 쓴다)
   carName?: string;
@@ -66,7 +65,8 @@ type Params = {
 
 export default function SummaryScreen() {
   const params = useLocalSearchParams<Params>();
-  const { saleModelCode, specCode, optionCodes, interiorCode, exteriorCode } = params;
+  const { saleModelCode, specCode, optionCodes, interiorCode, exteriorCode, manual } = params;
+  const isManual = manual === '1';
 
   // 가격 화면에서 고른 내용을 주소 값으로 받아서 다시 만든다.
   //  - 쉼표로 이어진 글자를 배열로 쪼개고(split) 빈 글자를 걸러낸다(filter(Boolean)).
@@ -85,6 +85,17 @@ export default function SummaryScreen() {
   const load = useCallback(() => getTrimPrice(saleModelCode ?? ''), [saleModelCode]);
   const { state, retry } = useLoad(load);
 
+  // 직접 입력 모드: 차량 정보 없이 차량가격만 입력받는다. 가격 데이터를 불러오지 않으므로 바로 그린다.
+  if (isManual) {
+    return (
+      <ThemedView style={styles.container}>
+        <Stack.Screen options={{ title: '차량 선택 완료' }} />
+        <StudyNotice />
+        <ManualBody />
+      </ThemedView>
+    );
+  }
+
   // 필요한 값이 없으면(주소를 직접 입력해서 들어온 경우 등) 안내만 보여준다.
   if (!saleModelCode || !specCode) {
     return (
@@ -97,8 +108,8 @@ export default function SummaryScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: '차량 선택 완료' }} />
-      {/* 맨 위: 로고 헤더(뒤로 가기 포함) + "학습용" 배너 + 화면 제목 */}
-      <ScreenTop title="차량 선택 완료" />
+      {/* 앱 기본 제목줄(뒤로 가기 + 제목) 아래에 "학습용" 안내 배너 */}
+      <StudyNotice />
       <LoadStatus
         state={state}
         loadingText="견적을 불러오는 중입니다."
@@ -107,6 +118,38 @@ export default function SummaryScreen() {
       />
       {state.status === 'ready' && <SummaryBody params={params} selection={selection} result={state.result} />}
     </ThemedView>
+  );
+}
+
+// 차량가격 직접 입력 모드의 본문.
+// 차량 정보(제조사, 차종, 트림, 사양, 옵션, 색상, 이미지)는 고른 것이 없으므로 아예 보여주지 않고,
+// 차량가격 입력부터 보여준다. 입력한 차량가격을 기준으로 아래 리스료 계산(LeaseSection)이 동작한다.
+// 입력한 금액은 어디에도 저장하지 않는다.
+function ManualBody() {
+  // 차량가격 입력 글자. 숫자만 든 글자("28760000")로 보관하고, 비어 있으면 아직 입력하지 않은 것이다.
+  const [priceText, setPriceText] = useState('');
+  const vehiclePrice = parseNumberText(priceText);
+
+  return (
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.scroll}>
+      {/* 맨 위가 바로 차량가격: 직접 입력한다 */}
+      <Section title="차량가격">
+        <Card>
+          <AmountInput
+            label="차량가격 직접 입력"
+            unit="원"
+            kind="amount"
+            value={priceText}
+            onChangeText={setPriceText}
+            placeholder="예) 30,000,000"
+            hint="차량가격을 입력하면 아래 리스료를 계산할 수 있습니다. 입력한 금액은 저장되지 않습니다."
+          />
+        </Card>
+      </Section>
+
+      <LeaseSection vehiclePrice={vehiclePrice} />
+      <PriceDisclaimer />
+    </ScrollView>
   );
 }
 
@@ -227,8 +270,6 @@ function SummaryBody({
 
         {/* 금액이 보이는 화면에는 항상 "학습용" 안내를 눈에 띄는 색으로 함께 보여준다 (문구는 constants/notices.ts) */}
         <PriceDisclaimer />
-        {/* 스크롤 내용의 맨 끝: 회사 정보 푸터 */}
-        <PageFooter />
       </ScrollView>
     </>
   );
@@ -237,43 +278,41 @@ function SummaryBody({
 // ---------------------------------------------------------------------------
 // 리스료 계산 구역. 입력(기간, 선납금, 보증금, 잔존가치, 금리)과 결과(월 납입금액)를 보여준다.
 // 계산식은 src/utils/lease.ts 와 docs/APP_SPEC.md 5장에 있다.
+//   vehiclePrice  차량가격(원). 직접 입력 모드에서 아직 입력하지 않았으면 0 이다.
 // ---------------------------------------------------------------------------
 function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
   const theme = useTheme();
   // 오류 글자색: 어두운 배경에서도 잘 보이도록 다크 모드에서는 밝은 빨강을 쓴다.
   const errorColor = useColorScheme() === 'dark' ? '#ff8a80' : '#c0392b';
-  // 입력 칸이 들고 있는 값들. 금액은 숫자만 든 글자("2876000"), 금리는 "5.25"처럼 글자로 보관한다.
-  // (글자로 보관하는 이유: 입력 중인 "5." 같은 중간 상태를 그대로 보여줄 수 있어야 하기 때문이다)
+  // 입력 값들. 선납금, 보증금, 잔존가치는 슬라이더로 고른 "비율(%)"만 들고 있고, 금액은 비율로 계산한다.
+  // 금리는 "5.25"처럼 글자로 보관한다. (입력 중인 "5." 같은 중간 상태를 그대로 보여줄 수 있어야 하기 때문이다)
   const [termMonths, setTermMonths] = useState<number>(36); // 처음에는 36개월을 선택해 둔다
-  const [prepaidText, setPrepaidText] = useState('');
-  const [depositText, setDepositText] = useState('');
-  const [residualText, setResidualText] = useState('');
+  const [prepaidPercent, setPrepaidPercent] = useState(0);
+  const [depositPercent, setDepositPercent] = useState(0);
+  const [residualPercent, setResidualPercent] = useState(0);
   const [rateText, setRateText] = useState('');
 
-  // 비율 버튼을 눌렀을 때: 이미 선택된 비율이면 칸을 비우고, 아니면 "차량가격 × 비율" 금액으로 채운다.
-  const toggleAmountPercent = (current: string, percent: number, set: (text: string) => void) => {
-    const amount = String(percentAmount(vehiclePrice, percent));
-    set(current === amount ? '' : amount);
-  };
-  // 지금 칸의 금액이 어느 비율과 정확히 같은지 찾는다. (직접 고쳐 쓴 금액이면 null → 버튼 선택 표시가 꺼진다)
-  const selectedPercent = (text: string): number | null =>
-    LEASE_PERCENTS.find((percent) => String(percentAmount(vehiclePrice, percent)) === text) ?? null;
+  // 비율 → 금액(차량가격 기준, 원 단위 반올림). 슬라이더 아래에 보여주고 계산에도 쓴다.
+  const prepaid = percentAmount(vehiclePrice, prepaidPercent);
+  const deposit = percentAmount(vehiclePrice, depositPercent);
+  const residual = percentAmount(vehiclePrice, residualPercent);
 
-  // 금리를 비우면 계산하지 않고 안내만 보여준다. 나머지 칸은 비우면 0원으로 본다.
+  // 금리를 비우면 계산하지 않고 안내만 보여준다. 차량가격이 없을 때도 마찬가지다.
   const rateEmpty = rateText === '' || rateText === '.';
+  const noPrice = !(vehiclePrice > 0);
   const result = useMemo(
     () =>
-      rateEmpty
+      rateEmpty || noPrice
         ? null
         : calcLeasePayment({
             vehiclePrice,
             termMonths,
-            prepaid: parseNumberText(prepaidText),
-            deposit: parseNumberText(depositText),
-            residual: parseNumberText(residualText),
+            prepaid,
+            deposit,
+            residual,
             annualRatePercent: parseNumberText(rateText),
           }),
-    [vehiclePrice, termMonths, prepaidText, depositText, residualText, rateText, rateEmpty],
+    [vehiclePrice, termMonths, prepaid, deposit, residual, rateText, rateEmpty, noPrice],
   );
 
   return (
@@ -308,61 +347,23 @@ function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
           </View>
         </View>
 
-        {/* 선납금, 보증금, 잔존가치: 비율 버튼으로 금액을 채우거나 금액을 직접 입력한다 */}
-        <View style={styles.field}>
-          <AmountInput
-            label="선납금"
-            unit="원"
-            kind="amount"
-            value={prepaidText}
-            onChangeText={setPrepaidText}
-            placeholder="0"
-            hint="처음에 내는 돈(장기선수금). 기간 동안 나눠서 월 납입금에서 뺍니다."
-          />
-          <PercentChips
-            label="선납금"
-            percents={LEASE_PERCENTS}
-            selected={selectedPercent(prepaidText)}
-            onSelect={(percent) => toggleAmountPercent(prepaidText, percent, setPrepaidText)}
-          />
-        </View>
+        {/* 선납금, 보증금, 잔존가치: 제목 바로 아래의 슬라이더로 비율을 고른다. 금액은 입력할 수 없고 계산된 값만 보인다. */}
+        <PercentSlider label="선납금" percents={LEASE_PERCENTS} value={prepaidPercent} onChange={setPrepaidPercent} amount={prepaid} />
+        <ThemedText type="small" themeColor="textSecondary">
+          처음에 내는 돈(장기선수금). 기간 동안 나눠서 월 납입금에서 뺍니다.
+        </ThemedText>
 
-        <View style={styles.field}>
-          <AmountInput
-            label="보증금"
-            unit="원"
-            kind="amount"
-            value={depositText}
-            onChangeText={setDepositText}
-            placeholder="0"
-            hint="만기에 돌려받는 돈. 맡긴 돈의 월 이자만큼 월 납입금이 줄어듭니다."
-          />
-          <PercentChips
-            label="보증금"
-            percents={LEASE_PERCENTS}
-            selected={selectedPercent(depositText)}
-            onSelect={(percent) => toggleAmountPercent(depositText, percent, setDepositText)}
-          />
-        </View>
+        <PercentSlider label="보증금" percents={LEASE_PERCENTS} value={depositPercent} onChange={setDepositPercent} amount={deposit} />
+        <ThemedText type="small" themeColor="textSecondary">
+          만기에 돌려받는 돈. 맡긴 돈의 월 이자만큼 월 납입금이 줄어듭니다.
+        </ThemedText>
 
-        <View style={styles.field}>
-          <AmountInput
-            label="잔존가치"
-            unit="원"
-            kind="amount"
-            value={residualText}
-            onChangeText={setResidualText}
-            placeholder="0"
-            hint="만기 때 차량의 가치. 클수록 월 납입금이 줄어듭니다."
-          />
-          <PercentChips
-            label="잔존가치"
-            percents={LEASE_PERCENTS}
-            selected={selectedPercent(residualText)}
-            onSelect={(percent) => toggleAmountPercent(residualText, percent, setResidualText)}
-          />
-        </View>
+        <PercentSlider label="잔존가치" percents={LEASE_PERCENTS} value={residualPercent} onChange={setResidualPercent} amount={residual} />
+        <ThemedText type="small" themeColor="textSecondary">
+          만기 때 차량의 가치. 클수록 월 납입금이 줄어듭니다.
+        </ThemedText>
 
+        {/* 금리는 직접 입력한다 */}
         <AmountInput
           label="금리 (연 %)"
           unit="%"
@@ -373,9 +374,11 @@ function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
         />
       </Card>
 
-      {/* 결과: 월 납입금액. 금리를 입력하기 전에는 안내만, 입력이 잘못되면 이유를 보여준다 */}
+      {/* 결과: 월 납입금액. 차량가격이나 금리가 없으면 안내만, 입력이 잘못되면 이유를 보여준다 */}
       <Card>
-        {result === null ? (
+        {noPrice ? (
+          <ThemedText themeColor="textSecondary">차량가격을 입력해 주세요. 입력하면 월 납입금액을 계산할 수 있습니다.</ThemedText>
+        ) : result === null ? (
           <ThemedText themeColor="textSecondary">금리를 입력해 주세요. 입력하면 월 납입금액이 바로 계산됩니다.</ThemedText>
         ) : result.ok ? (
           <>
@@ -435,7 +438,7 @@ const styles = StyleSheet.create({
   scroll: {
     padding: Spacing.three,
     gap: Spacing.three,
-    paddingBottom: 0,
+    paddingBottom: Spacing.six,
     maxWidth: MaxContentWidth,
     width: '100%',
     alignSelf: 'center',

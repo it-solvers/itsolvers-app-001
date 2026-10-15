@@ -49,16 +49,15 @@ export default function RootLayout() {
       </WebHead>
       {/* 아래 name 은 파일 이름(확장자 제외)과 같아야 한다. options 로 각 화면의 제목줄을 정한다. */}
       {/*
-        앱 기본 제목줄은 쓰지 않는다(headerShown: false). 모든 화면이 로고 헤더(components/site-header.tsx)를
-        공통 헤더로 쓰고, 뒤로 가기 버튼과 화면 제목도 그 안(components/screen-top.tsx)에서 보여준다.
-        아래 title 은 화면에는 보이지 않고, 웹에서 브라우저 탭 제목으로만 쓰인다.
-        (시작 화면은 검색용 제목, 나머지는 화면 이름)
-        iOS 에서는 화면 왼쪽 끝을 밀어서 뒤로 가는 동작이 제목줄이 없어도 그대로 된다.
+        시작 화면과 제조사 선택 화면은 앱 기본 제목줄을 끄고(headerShown: false) 로고 헤더(components/site-header.tsx)를 쓴다.
+        제조사 선택 이후 화면(차종, 트림, 가격, 차량 선택 완료)은 화면이 부족해서 로고 헤더 없이 앱 기본 제목줄
+        (뒤로 가기 + 제목)을 쓴다. 제목은 각 화면 파일의 <Stack.Screen options> 에서 정하고, 여기의 title 은
+        웹 브라우저 탭 제목의 기본값이다.
       */}
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" options={{ title: LANDING_TITLE }} />
-        <Stack.Screen name="brands" options={{ title: '제조사 선택' }} />
-        <Stack.Screen name="cars" options={{ title: '차종 선택' }} />
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false, title: LANDING_TITLE }} />
+        <Stack.Screen name="brands" options={{ headerShown: false, title: '제조사 선택' }} />
+        <Stack.Screen name="cars" options={{ title: '차종 선택', headerBackTitle: '제조사' }} />
         <Stack.Screen name="trims" options={{ title: '트림 선택' }} />
         <Stack.Screen name="price" options={{ title: '가격 확인' }} />
         <Stack.Screen name="summary" options={{ title: '차량 선택 완료' }} />

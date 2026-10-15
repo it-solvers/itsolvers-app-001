@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { FlatList, StyleSheet } from 'react-native';
 
 import { BrandLogo } from '@/components/brand-logo';
+import { CoinLogo } from '@/components/coin-logo';
 import { ListRow } from '@/components/list-row';
 import { ScreenTop } from '@/components/screen-top';
 import { SiteFooter } from '@/components/site-footer';
@@ -47,9 +48,22 @@ export default function BrandsScreen() {
           />
         )}
         ListFooterComponent={
-          <ThemedText type="small" themeColor="textSecondary" style={styles.footer}>
-            현재는 현대자동차 승용차만 지원합니다. 다른 제조사는 추후 추가할 예정입니다.
-          </ThemedText>
+          <ThemedView style={styles.footer}>
+            {/*
+              차량을 고르지 않고 차량가격만 직접 입력해서 리스료를 계산하는 길. 차량 선택 완료 화면으로 바로 간다.
+              제조사 줄과 똑같은 ListRow 모양으로 만들고, 엠블럼 자리에는 재미있는 로고(금빛 동전)를 넣었다.
+              제목은 기능을 그대로 알려 주고(화면 낭독에도 읽힌다), 아래 보조 글에 가벼운 농담을 담았다.
+            */}
+            <ListRow
+              title="차량가격 직접 입력"
+              subtitle="차는 패스! 가격만 쏙 넣으세요 💸"
+              leading={<CoinLogo />}
+              onPress={() => router.push({ pathname: '/summary', params: { manual: '1' } })}
+            />
+            <ThemedText type="small" themeColor="textSecondary">
+              현재는 현대자동차 승용차만 지원합니다. 다른 제조사는 추후 추가할 예정입니다.
+            </ThemedText>
+          </ThemedView>
         }
       />
       {/* 맨 아래: 회사 정보 푸터 (이 화면은 짧아서 화면 맨 아래에 붙여 둔다) */}
@@ -67,5 +81,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   separator: { height: Spacing.two },
-  footer: { marginTop: Spacing.three },
+  // 제조사 줄 바로 아래에 같은 간격(Spacing.two)으로 붙인다
+  footer: { marginTop: Spacing.two, gap: Spacing.three },
 });
