@@ -29,6 +29,8 @@ export type CarOption = {
   name: string;
   price: number;
   specCodes: string[];
+  kind: 'choice' | 'tuix'; // choice: 일반 선택 옵션, tuix: 제조사 추가 옵션(튜익스)
+  groupCodes: string[]; // 함께 묶인 옵션 코드(자기 자신 포함). 일반 옵션만 사용
 };
 
 /** 색상. 가격이 없으면 0 */

@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,11 +10,12 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useLoad } from '@/hooks/use-load';
+import { useOptionSelection } from '@/hooks/use-option-selection';
 import { useTheme } from '@/hooks/use-theme';
 import type { LoadResult } from '@/storage/cache';
 import { getTrimPrice } from '@/storage/vehicleData';
 import type { TrimPrice } from '@/types/car';
-import { calcBreakdown, formatExtra, formatPrice, isOptionAvailable, type Selection } from '@/utils/price';
+import { calcBreakdown, formatExtra, formatPrice, isOptionAvailable } from '@/utils/price';
 
 const DISCLAIMER =
   '참고용 가격입니다. 실제 구매 가격은 제조사 또는 영업점에서 반드시 확인하세요.';
@@ -52,31 +53,9 @@ function PriceBody({ title, result }: { title: string; result: LoadResult<TrimPr
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
-  const [selection, setSelection] = useState<Selection>(() => ({
-    // 추가금이 없는 사양(기본)을 먼저 고른다.
-    specCode: (price.specs.find((s) => s.extraPrice === 0) ?? price.specs[0])?.code ?? '',
-    optionCodes: [],
-    interiorCode: null,
-    exteriorCode: null,
-  }));
+  const { selection, disabledReasons, busy, message, ruleError, selectSpec, toggleOption, setInterior, setExterior } =
+    useOptionSelection(price);
   const breakdown = useMemo(() => calcBreakdown(price, selection), [price, selection]);
-
-  const toggleOption = (code: string) =>
-    setSelection((s) => ({
-      ...s,
-      optionCodes: s.optionCodes.includes(code) ? s.optionCodes.filter((c) => c !== code) : [...s.optionCodes, code],
-    }));
-
-  // 사양을 바꾸면 새 사양에서 고를 수 없는 옵션은 선택에서 뺀다.
-  const selectSpec = (specCode: string) =>
-    setSelection((s) => ({
-      ...s,
-      specCode,
-      optionCodes: s.optionCodes.filter((code) => {
-        const option = price.options.find((o) => o.code === code);
-        return option ? isOptionAvailable(option, specCode) : false;
-      }),
-    }));
 
   return (
     <>
@@ -102,21 +81,36 @@ function PriceBody({ title, result }: { title: string; result: LoadResult<TrimPr
           ))}
         </Section>
 
-        <Section title="선택 옵션">
+        <Section
+          title="선택 옵션"
+          hint={busy ? '옵션 선택 조건을 확인하는 중입니다...' : undefined}>
+          {ruleError ? (
+            <ThemedText type="small" style={styles.warning}>
+              {ruleError}
+            </ThemedText>
+          ) : null}
+          {message ? (
+            <ThemedText type="small" themeColor="textSecondary">
+              {message}
+            </ThemedText>
+          ) : null}
           {price.options.length === 0 && (
             <ThemedText themeColor="textSecondary">선택할 수 있는 옵션이 없습니다.</ThemedText>
           )}
           {price.options.map((option) => {
-            const available = isOptionAvailable(option, selection.specCode);
+            const specOk = isOptionAvailable(option, selection.specCode);
+            const selected = specOk && selection.optionCodes.includes(option.code);
+            const reason = disabledReasons[option.code];
             return (
               <SelectRow
                 key={option.code}
                 mode="check"
                 title={option.name}
                 rightText={formatExtra(option.price)}
-                subtitle={available ? undefined : '선택한 사양에서는 고를 수 없습니다'}
-                disabled={!available}
-                selected={available && selection.optionCodes.includes(option.code)}
+                subtitle={specOk ? (selected ? undefined : reason) : '선택한 사양에서는 고를 수 없습니다'}
+                // 선택된 옵션은 언제나 해제할 수 있어야 한다.
+                disabled={!specOk || (!selected && !!reason)}
+                selected={selected}
                 onPress={() => toggleOption(option.code)}
               />
             );
@@ -131,9 +125,7 @@ function PriceBody({ title, result }: { title: string; result: LoadResult<TrimPr
               title={color.name}
               rightText={formatExtra(color.price)}
               selected={selection.interiorCode === color.code}
-              onPress={() =>
-                setSelection((s) => ({ ...s, interiorCode: s.interiorCode === color.code ? null : color.code }))
-              }
+              onPress={() => setInterior(color.code)}
             />
           ))}
         </Section>
@@ -146,9 +138,7 @@ function PriceBody({ title, result }: { title: string; result: LoadResult<TrimPr
               title={color.name}
               rightText={formatExtra(color.price)}
               selected={selection.exteriorCode === color.code}
-              onPress={() =>
-                setSelection((s) => ({ ...s, exteriorCode: s.exteriorCode === color.code ? null : color.code }))
-              }
+              onPress={() => setExterior(color.code)}
             />
           ))}
         </Section>
@@ -201,6 +191,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   title: { fontSize: 24, lineHeight: 32 },
+  warning: { color: '#c0392b' },
   section: { gap: Spacing.one, marginTop: Spacing.two },
   sectionBody: { gap: Spacing.two, marginTop: Spacing.one },
   footer: {

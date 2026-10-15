@@ -111,7 +111,13 @@ type OptionsResponse = {
     carPrice: string;
     specPrice: string;
   }[];
-  optionChoice: { choiceOptionCode: string; choiceOptionName: string; choiceOptionPrice: string; saleSpecCode: string }[];
+  optionChoice: {
+    choiceOptionCode: string;
+    choiceOptionName: string;
+    choiceOptionPrice: string;
+    saleSpecCode: string;
+    choiceOptionGroupCodes: string | null;
+  }[];
   optionTuix: { tuixOptionCode: string; tuixOptionName: string; tuixOptionPrice: string }[];
 };
 
@@ -139,6 +145,8 @@ export async function fetchTrimPrice(saleModelCode: string): Promise<TrimPrice> 
     name: o.choiceOptionName,
     price: toNumber(o.choiceOptionPrice, o.choiceOptionName),
     specCodes: o.saleSpecCode.split(',').map((c) => c.trim()),
+    kind: 'choice',
+    groupCodes: (o.choiceOptionGroupCodes ?? o.choiceOptionCode).split(',').map((c) => c.trim()),
   }));
   // 튜익스(제조사 추가 옵션)에는 사양 제한 정보가 없어 모든 사양에서 고를 수 있는 것으로 둔다.
   const allSpecCodes = specs.map((s) => s.code);
@@ -147,6 +155,8 @@ export async function fetchTrimPrice(saleModelCode: string): Promise<TrimPrice> 
     name: o.tuixOptionName,
     price: toNumber(o.tuixOptionPrice, o.tuixOptionName),
     specCodes: allSpecCodes,
+    kind: 'tuix',
+    groupCodes: [o.tuixOptionCode],
   }));
 
   // choiceYn이 "Y"인 색상만 이 트림에서 고를 수 있다.
@@ -173,4 +183,86 @@ export async function fetchTrimPrice(saleModelCode: string): Promise<TrimPrice> 
     interiorColors,
     exteriorColors,
   };
+}
+
+// ---- 4. 옵션 선택 규칙 (선택할 때마다 실시간으로 조회, 저장하지 않음) ----
+
+type OptionDelResponse = { carAddOptionList: { optionCode: string }[] | null };
+
+/**
+ * 옵션 하나를 새로 골랐을 때 함께 선택되어야 하는 옵션 코드들.
+ * 응답은 선택된 옵션 일부를 빠뜨릴 수 있어서, 호출하는 쪽에서 기존 선택과 합쳐서 써야 한다.
+ */
+export async function fetchRequiredOptions(
+  saleModelCode: string,
+  specCode: string,
+  selected: string[],
+  added: string,
+): Promise<string[]> {
+  const data = await get<OptionDelResponse>(`/option/del/${saleModelCode}`, {
+    saleSpecCode: specCode,
+    afterOption: added,
+    beforOption: selected.join(','),
+  });
+  return (data.carAddOptionList ?? []).map((o) => o.optionCode);
+}
+
+export type OptionRules = {
+  disabled: string[]; // 지금 선택 상태에서 고를 수 없는 일반 옵션
+  enabled: string[]; // disabled에 있어도 고를 수 있게 다시 허용된 옵션
+};
+
+/** 지금 선택한 일반 옵션들과 함께 고를 수 있는지/없는지 */
+export async function fetchOptionRules(
+  saleModelCode: string,
+  specCode: string,
+  selected: string[],
+): Promise<OptionRules> {
+  const params = { saleSpecCode: specCode, optionCode: selected.join(',') };
+  const [disabled, enabled] = await Promise.all([
+    get<{ optionCode: string }[]>(`/disable-option/${saleModelCode}`, params),
+    get<{ optionCode: string }[]>(`/add-possible-option/${saleModelCode}`, params),
+  ]);
+  return {
+    disabled: requireArray(disabled, '비활성 옵션').map((o) => o.optionCode),
+    enabled: requireArray(enabled, '활성 옵션').map((o) => o.optionCode),
+  };
+}
+
+export type TuixRuleInput = {
+  specCode: string;
+  selectedOptions: string[]; // 선택한 일반 옵션
+  selectedTuix: string[]; // 선택한 튜익스
+  allTuix: string[]; // 이 트림의 모든 튜익스
+  exteriorCode: string | null;
+  interiorCode: string | null;
+};
+
+/**
+ * 지금 선택(일반 옵션, 색상, 다른 튜익스)과 함께 고를 수 없는 튜익스 코드들.
+ * - tuix-check: 일반 옵션/색상과 맞지 않는 튜익스
+ * - disable-tuix: 이미 고른 튜익스와 함께 고를 수 없는 튜익스
+ */
+export async function fetchDisabledTuix(saleModelCode: string, input: TuixRuleInput): Promise<string[]> {
+  const check = get<{ tuixOptionCode: string }[]>(`/options/tuix-check/${saleModelCode}`, {
+    saleModelCode,
+    saleSpecCode: input.specCode,
+    optionCode: input.selectedOptions.join(','),
+    exteriorColorCode: input.exteriorCode ?? '',
+    interiorColorCode: input.interiorCode ?? '',
+    tuixCode: input.allTuix.join(','),
+  });
+  const conflict =
+    input.selectedTuix.length > 0
+      ? get<{ tuixCode: string }[]>(`/disable-tuix/${saleModelCode}`, {
+          saleModelCode,
+          tuixCode: input.selectedTuix.join(','),
+        })
+      : Promise.resolve([] as { tuixCode: string }[]);
+
+  const [checked, conflicts] = await Promise.all([check, conflict]);
+  return [
+    ...requireArray(checked, '튜익스 확인').map((t) => t.tuixOptionCode),
+    ...requireArray(conflicts, '튜익스 충돌').map((t) => t.tuixCode),
+  ];
 }

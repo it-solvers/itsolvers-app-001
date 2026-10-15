@@ -38,10 +38,10 @@
 
 ```
 src/app/         화면과 라우팅 (파일 이름 = 주소). _layout.tsx(스택), index.tsx(제조사), cars.tsx(차종), trims.tsx(트림), price.tsx(가격)
-src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), load-status(로딩/오류), data-notice(데이터 기준일)
+src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), load-status(로딩/오류), data-notice(데이터 기준일), 스플래시용 animated-icon
 src/constants/   템플릿 테마 값, brands.ts(지원 제조사 목록)
-src/hooks/       use-load(화면 데이터 불러오기), 템플릿 훅(색상 테마 등)
-src/utils/       price.ts(가격 표시와 합계 계산)
+src/hooks/       use-load(화면 데이터 불러오기), use-option-selection(사양·옵션·색상 선택과 선택 규칙), 템플릿 훅(색상 테마 등)
+src/utils/       price.ts(가격 표시와 합계 계산), options.ts(옵션 선택 목록 변경 규칙)
 src/api/         제조사 사이트 호출 코드 (hyundai.ts). 화면에서 fetch를 직접 쓰지 않는다
 src/storage/     저장 코드. cache.ts(JSON 파일 저장, 하루 1회 규칙), vehicleData.ts(화면이 호출하는 getCars/getTrims/getTrimPrice)
 src/types/       공통 TypeScript 타입 (car.ts: 차종/트림/사양/옵션/색상/가격)
@@ -86,12 +86,15 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 - 저장본 삭제/초기화 기능은 아직 없다. 만들 때는 결과를 사용자에게 명확히 알린다.
 - 저장본이 쌓이는 만큼 파일이 늘어난다(트림 하나당 1개). 오래된 파일 정리는 아직 하지 않는다.
 
-## 7. 템플릿 정리 후보 (미결정, 승인 후 진행)
+## 7. 템플릿 정리 현황 (2026-10-15)
 
-기본 템플릿에는 현재 기능에 불필요할 수 있는 항목이 있다. 기능이 정해진 뒤 필요 여부를 판단해 정리한다.
+삭제함 (사용자 승인): 예제 화면 explore, 탭 컴포넌트, 사용하지 않는 컴포넌트(`hint-row`, `external-link`, `web-badge`, `ui/collapsible`), 사용하지 않는 이미지(react-logo, tabIcons, tutorial-web, expo-badge), `scripts/reset-project.js`와 npm 스크립트 `reset-project`.
 
-- 사용하지 않게 된 템플릿 파일: `components/hint-row.tsx`, `components/ui/collapsible.tsx`, `web-badge.tsx`, `external-link.tsx`, 탭 아이콘 이미지(`assets/images/tabIcons/`), `scripts/reset-project.js` 등
-- 패키지: `@expo/ui`, `expo-glass-effect`, `react-native-web`/`react-dom`, `expo-web-browser`, `expo-symbols` 등 (템플릿 예제 코드가 사용 중이라 지금 제거하면 예제가 깨질 수 있음)
+유지: 앱 아이콘/스플래시 이미지(`app.json`이 사용), `animated-icon`(스플래시), `expo.icon`.
+
+패키지 정리 후보 (코드에서 직접 import하지 않음. 제거는 승인 후 진행하며, 제거 전 `expo-doctor`와 두 플랫폼 실행으로 확인한다):
+- 템플릿 예제만 쓰던 것으로 보이는 패키지: `@expo/ui`, `expo-glass-effect`, `expo-symbols`, `expo-web-browser`, `expo-device`
+- 아래는 직접 import하지 않아도 Expo Router 등이 요구하므로 제거하지 않는다: `expo-constants`, `expo-linking`, `expo-font`, `expo-status-bar`, `expo-system-ui`, `react-native-screens`, `react-native-gesture-handler`, `react-dom`/`react-native-web`(웹 실행용)
 - 실험 옵션 `reactCompiler: true`: 초보자 디버깅이 어려워질 수 있어 재검토. `typedRoutes: true`는 잘못된 화면 주소를 잡아 주므로 유지 권장.
 
 ## 8. 결정 기록
@@ -102,6 +105,8 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 | 2026-10-15 | 앱 이름 `itsolvers-01`, 프로젝트를 현재 폴더에 직접 생성 | 확정 |
 | 2026-10-15 | 앱 이름과 폴더명을 `itsolvers-app-001`로 변경 (기존 `itsolvers-01`) | 확정 |
 | 2026-10-15 | 내비게이션: 탭 → 스택으로 교체. 템플릿 예제 화면(explore)과 탭 컴포넌트 삭제 (승인) | 확정 |
+| 2026-10-15 | 옵션 선택 규칙은 제조사 사이트와 동일하게 구현. 규칙은 선택할 때마다 실시간 조회하고 저장하지 않음 | 확정 |
+| 2026-10-15 | 사용하지 않는 템플릿 파일 삭제 (승인) | 확정 |
 | 2026-10-15 | 개발 서버 포트 8082 | 확정 |
 | 2026-10-15 | `.git`: 생성 도구가 자동 생성한 저장소(Initial commit 1개)를 유지 | 임시 (변경 가능) |
 | 2026-10-15 | 앱 기능: 국내 승용차 가격 조회 (차량→트림→옵션). 1단계는 현대자동차 승용차만 | 확정 |
@@ -152,3 +157,18 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 - 호출 빈도 제한 (앱에서 직접 호출은 시뮬레이터/에뮬레이터에서 성공함)
 - 승용 필터 결과는 6종(쏘나타·아반떼·그랜저와 각 Hybrid)이다. 쏘나타 트림 17개 중에는 같은 이름이 중복되는 것(Exclusive가 모델 코드 DNHS.../DNJS... 둘)과 BUSINESS 1/2가 있다. 렌터카·택시용으로 추정되나 확인하지 않았다.
 - 옵션 간 제약(함께 선택 불가, 필수 선택)은 `/disable-option/`, `/option-required-choice` 등에 있을 것으로 보이나 조회하지 않았다.
+
+### 옵션 선택 규칙 API (2026-10-15 조사, 모두 `product` 서비스)
+
+사이트가 옵션을 고를 때마다 쓰는 API다. 인자는 사이트 코드와 실제 호출 결과로 확인했다. 전체 승용 트림을 훑어서 확인한 결과, "서로 같이 못 고르는 조합"(`carDelOptionList`)은 하나도 없었고, 제약은 아래 세 가지 형태다.
+
+| 목적 | 요청 | 설명 |
+|---|---|---|
+| 함께 선택되는 옵션 | `/option/del/{saleModelCode}?saleSpecCode&afterOption={새로 고른 옵션}&beforOption={이미 고른 옵션들}` | `carAddOptionList`가 함께 선택되어야 하는 옵션. 이미 고른 옵션을 빠뜨릴 수 있어 기존 선택과 합쳐서 쓴다. (HUD→PA2, 그랜저 20W→PLA, 아반떼 SDP→CV1 등) |
+| 지금 고를 수 없는/다시 고를 수 있는 옵션 | `/disable-option/{code}`, `/add-possible-option/{code}` (`saleSpecCode`, `optionCode`=이미 고른 옵션들) | 선택이 하나도 없으면 호출하지 않는다. 사양에서 고를 수 있는 일반 옵션이 하나뿐이면 제약이 없는 것으로 본다(사이트와 같음). |
+| 튜익스 제약 | `/options/tuix-check/{code}` (선택 옵션·색상·모든 튜익스 코드) / `/disable-tuix/{code}` (이미 고른 튜익스) | 앞의 것은 옵션·색상과 맞지 않는 튜익스(그랜저 PAS ↔ 블랙 루프 스킨), 뒤의 것은 튜익스끼리 못 고르는 조합(DN0025 ↔ DN0024). |
+
+- `/options` 응답의 `choiceOptionGroupCodes`(예: HUD → "HUD,PA2")는 함께 묶이는 옵션이다. 해제할 때 묶여 있던 다른 옵션을 같이 해제하는 데 쓴다. 묶음 코드에 빠진 선행 옵션(아반떼 SDP→CV1)이 있어서, 선택할 때의 필수 옵션은 `option/del` 결과를 따른다.
+- 묶음 가격은 개별 가격의 합이다. (HUD 660,000 + PA2 650,000 = 1,310,000. `/option-mix-info`로 확인)
+- 구현: `src/api/hyundai.ts`의 `fetchRequiredOptions`, `fetchOptionRules`, `fetchDisabledTuix`, 선택 상태는 `src/hooks/use-option-selection.ts`.
+- 확인하지 못한 것: 사이트가 선택 중에 띄우는 "함께 추가/삭제됩니다" 확인 팝업 단계(우리는 확인 없이 적용하고 안내 문구로 알림), 사이트의 옵션 해제 동작(우리는 묶음 코드 기준으로 함께 해제), `unityChoiceYn`이 `N`인 옵션(HUD, 20W)의 별도 처리, 튜익스 간 규칙을 색상별로 모두 훑어보지는 않음.
