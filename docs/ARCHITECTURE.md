@@ -27,7 +27,7 @@
 | iOS 시뮬레이터 (iPhone 16e, iOS 26.0) | 템플릿 Home 화면 정상 표시 |
 | Android 에뮬레이터 (Galaxy_S23 AVD, API 36) | 템플릿 Home 화면 정상 표시 |
 | 실기기 | 미확인 |
-| `npm run lint` | **동작 안 함**: eslint 패키지 미설치 (`eslint.config.js`는 Expo가 생성함) |
+| `npm run lint` | 오류 0건 (eslint 9 + eslint-config-expo, 설정은 `eslint.config.js`). 처음에는 `set-state-in-effect` 오류 2건이 있어 `use-load.ts`와 `use-color-scheme.web.ts`를 고쳤다 |
 | `npm audit` | 취약점 29건(moderate 11, high 18) 보고됨. 템플릿 의존성의 하위 패키지이며 아직 원인과 영향을 조사하지 않음. `audit fix --force`는 사용하지 않는다. |
 
 ## 3. 개발 서버 포트
@@ -117,7 +117,7 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 | 2026-10-15 | JSON 저장: `expo-file-system`, 앱 문서 폴더의 `price-cache/` (승인 후 설치) | 확정 |
 | - | 최소 OS 버전, 테스트 기기, 배포 방식 | 미결정 |
 | - | 데이터 백업/내보내기 | 미결정 |
-| - | eslint 설치 여부 | 미결정 (승인 필요) |
+| 2026-10-15 | eslint: 이미 설치되어 있음(`eslint`, `eslint-config-expo`). 새로 설치하지 않고 lint 오류만 수정 | 확정 |
 
 ## 9. 의도적으로 하지 않는 것
 

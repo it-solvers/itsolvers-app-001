@@ -23,7 +23,7 @@ description: React Native(Expo) 기능을 추가하거나 수정할 때 따르�
 - 불필요한 추상화와 중복 코드를 피한다.
 
 ## 4. 검증
-- `npx tsc --noEmit`을 실행한다. lint는 설정되어 동작하는 경우에만 실행한다. (현재 eslint 미설치)
+- `npx tsc --noEmit`과 `npm run lint`를 실행한다.
 - 개발 서버 포트는 8082다. `npm run ios` / `npm run android`를 사용한다.
 - 저장 기능이 있다면 저장 후 재조회 및 앱 재시작 후 유지 여부를 검증한다.
 - iOS와 Android를 각각 확인하고 결과를 구분해 보고한다.
