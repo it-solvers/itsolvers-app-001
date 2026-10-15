@@ -11,7 +11,7 @@
 | 언어 | TypeScript `~6.0.3` (strict) |
 | 라우팅 | Expo Router `~57.0.27` (파일 기반, 라우트 루트 `src/app`) |
 | 패키지 관리자 | npm 11.19.1 |
-| 템플릿 | `create-expo-app` default 템플릿 (예제 화면 Home/Explore 포함) |
+| 템플릿 | `create-expo-app` default 템플릿. 예제 화면과 탭은 제거하고 스택 내비게이션으로 교체함 |
 | 데이터 저장 | 기기 내부 저장소. 가져온 가격 데이터를 JSON 파일로 저장 (`expo-file-system`, 6장) |
 | 백엔드/계정/분석 | 없음 (앱이 제조사 사이트 API를 직접 호출) |
 
@@ -37,9 +37,9 @@
 ## 4. 폴더 구조
 
 ```
-src/app/         화면과 라우팅 (파일 이름 = 주소). 화면은 얇게 유지
-src/components/  여러 화면에서 실제로 재사용하는 UI 조각
-src/constants/   템플릿 테마 값
+src/app/         화면과 라우팅 (파일 이름 = 주소). 화면은 얇게 유지. _layout.tsx(스택), index.tsx(제조사), cars.tsx(차종)
+src/components/  여러 화면에서 실제로 재사용하는 UI 조각 (list-row.tsx 등)
+src/constants/   템플릿 테마 값, brands.ts(지원 제조사 목록)
 src/hooks/       템플릿 훅 (색상 테마 등)
 src/api/         제조사 사이트 호출 코드 (hyundai.ts). 화면에서 fetch를 직접 쓰지 않는다
 src/storage/     저장 코드. cache.ts(JSON 파일 저장, 하루 1회 규칙), vehicleData.ts(화면이 호출하는 getCars/getTrims/getTrimPrice)
@@ -89,7 +89,7 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 
 기본 템플릿에는 현재 기능에 불필요할 수 있는 항목이 있다. 기능이 정해진 뒤 필요 여부를 판단해 정리한다.
 
-- 예제 화면 Home/Explore, `scripts/reset-project.js`, 템플릿 이미지
+- 사용하지 않게 된 템플릿 파일: `components/hint-row.tsx`, `components/ui/collapsible.tsx`, `web-badge.tsx`, `external-link.tsx`, 탭 아이콘 이미지(`assets/images/tabIcons/`), `scripts/reset-project.js` 등
 - 패키지: `@expo/ui`, `expo-glass-effect`, `react-native-web`/`react-dom`, `expo-web-browser`, `expo-symbols` 등 (템플릿 예제 코드가 사용 중이라 지금 제거하면 예제가 깨질 수 있음)
 - 실험 옵션 `reactCompiler: true`: 초보자 디버깅이 어려워질 수 있어 재검토. `typedRoutes: true`는 잘못된 화면 주소를 잡아 주므로 유지 권장.
 
@@ -100,6 +100,7 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 | 2026-10-15 | Expo SDK 57 + TypeScript + Expo Router, npm | 확정 (생성 완료) |
 | 2026-10-15 | 앱 이름 `itsolvers-01`, 프로젝트를 현재 폴더에 직접 생성 | 확정 |
 | 2026-10-15 | 앱 이름과 폴더명을 `itsolvers-app-001`로 변경 (기존 `itsolvers-01`) | 확정 |
+| 2026-10-15 | 내비게이션: 탭 → 스택으로 교체. 템플릿 예제 화면(explore)과 탭 컴포넌트 삭제 (승인) | 확정 |
 | 2026-10-15 | 개발 서버 포트 8082 | 확정 |
 | 2026-10-15 | `.git`: 생성 도구가 자동 생성한 저장소(Initial commit 1개)를 유지 | 임시 (변경 가능) |
 | 2026-10-15 | 앱 기능: 국내 승용차 가격 조회 (차량→트림→옵션). 1단계는 현대자동차 승용차만 | 확정 |
