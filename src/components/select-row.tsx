@@ -5,6 +5,7 @@
 
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ColorDot } from '@/components/color-dot';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -13,13 +14,14 @@ type SelectRowProps = {
   title: string;
   subtitle?: string;
   rightText?: string; // 가격 등
+  swatchUri?: string; // 색상 칩 이미지 주소. 있으면 이름 앞에 색상을 동그랗게 보여준다 (색상 목록에서 사용)
   selected: boolean; // 지금 선택되어 있는지 (이 값은 부모 화면이 정한다)
   mode: 'radio' | 'check'; // radio: 하나만 선택, check: 여러 개 선택
   disabled?: boolean; // true 면 흐리게 보이고 눌러도 반응하지 않는다
   onPress: () => void;
 };
 
-export function SelectRow({ title, subtitle, rightText, selected, mode, disabled, onPress }: SelectRowProps) {
+export function SelectRow({ title, subtitle, rightText, swatchUri, selected, mode, disabled, onPress }: SelectRowProps) {
   const theme = useTheme();
   // 선택 표시 글자. 라디오는 ◉(선택) / ○(미선택), 체크는 ☑(선택) / ☐(미선택).
   const marker = mode === 'radio' ? (selected ? '◉' : '○') : selected ? '☑' : '☐';
@@ -40,6 +42,7 @@ export function SelectRow({ title, subtitle, rightText, selected, mode, disabled
         },
       ]}>
       <ThemedText style={styles.marker}>{marker}</ThemedText>
+      {swatchUri !== undefined ? <ColorDot uri={swatchUri} /> : null}
       <View style={styles.texts}>
         <ThemedText type="default">{title}</ThemedText>
         {subtitle ? (

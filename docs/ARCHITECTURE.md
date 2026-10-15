@@ -38,10 +38,10 @@
 
 ```
 src/app/         화면과 라우팅 (파일 이름 = 주소). +html.tsx(웹 HTML 틀), _layout.tsx(스택), index.tsx(시작/랜딩), brands.tsx(제조사), cars.tsx(차종), trims.tsx(트림), price.tsx(가격), summary.tsx(차량 선택 완료)
-src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), section(제목이 붙은 구역), load-status(로딩/오류), data-notice(데이터 기준일), study-notice("학습용" 안내 배너와 하단 문구), web-head(웹 head 지정), 스플래시용 animated-icon
+src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), section(제목이 붙은 구역), load-status(로딩/오류), data-notice(데이터 기준일), study-notice("학습용" 안내 배너와 하단 문구), web-head(웹 head 지정), car-card(차량 카드), brand-logo(제조사 엠블럼), color-dot(색상 동그라미), remote-image(인터넷 이미지), amount-input(숫자 입력 칸), percent-chips(비율 버튼), 스플래시용 animated-icon
 src/constants/   템플릿 테마 값, brands.ts(지원 제조사 목록), site.ts(웹 검색/공유 정보), notices.ts(학습용 안내 문구)
 src/hooks/       use-load(화면 데이터 불러오기), use-option-selection(사양·옵션·색상 선택과 선택 규칙), 템플릿 훅(색상 테마 등)
-src/utils/       price.ts(가격 표시, 선택한 항목 목록, 합계 계산), options.ts(옵션 선택 목록 변경 규칙), trim.ts(트림 구매 용도)
+src/utils/       price.ts(가격 표시, 선택한 항목 목록, 합계 계산), options.ts(옵션 선택 목록 변경 규칙), trim.ts(트림 구매 용도), lease.ts(리스료 계산과 입력 글자 정리), images.ts(제조사 이미지 주소)
 src/api/         제조사 사이트 호출 코드 (hyundai.ts). 화면에서 fetch를 직접 쓰지 않는다
 src/storage/     저장 코드. cache.ts(JSON 파일 저장, 하루 1회 규칙), vehicleData.ts(화면이 호출하는 getCars/getTrims/getTrimPrice)
 src/types/       공통 TypeScript 타입 (car.ts: 차종/트림/사양/옵션/색상/가격)
@@ -126,6 +126,8 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 | 2026-10-15 | 시작(랜딩) 화면 추가: 학습용이며 데이터가 정확하지 않을 수 있다는 안내와 "견적하기" 버튼. 첫 화면(`/`)을 시작 화면으로 바꾸고 제조사 선택은 `/brands`로 이동 | 확정 |
 | 2026-10-15 | 모든 화면 위쪽에 "학습용" 배너(노란 계열), 금액 화면 하단 문구에 "학습용" 포함. 문구는 `constants/notices.ts` 한곳 | 확정 |
 | 2026-10-15 | 웹 SEO: 시작 화면만 검색 노출, 나머지 noindex. 파비콘·공유 이미지는 회사 사이트(`itsolvers/web/html`) 기준 | 확정 |
+| 2026-10-15 | 차량 선택 완료 화면: 합계 고정 영역을 없애고 차량 정보 마지막에 "차량가격", 아래에 리스료 계산(기간·선납금·보증금·잔존가치·금리 → 월 납입금액). 회사 사이트 계산식 기반 | 확정 |
+| 2026-10-15 | 차종 목록은 카드(큰 이미지), 제조사 엠블럼, 색상 이름 앞 동그라미를 제조사 사이트 이미지로 표시 | 확정 |
 | 2026-10-15 | 개발 서버 포트 8082 | 확정 |
 | 2026-10-15 | `.git`: 생성 도구가 자동 생성한 저장소(Initial commit 1개)를 유지 | 임시 (변경 가능) |
 | 2026-10-15 | 앱 기능: 국내 승용차 가격 조회 (차량→트림→옵션). 1단계는 현대자동차 승용차만 | 확정 |
@@ -161,6 +163,21 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 - **앱(iOS/Android)에는 영향 없음**: head 지정은 `web-head.tsx`(앱: 아무 일 안 함)와 `web-head.web.tsx`(웹: 실제 지정)로 나눴다.
 - **구글 서치콘솔 소유권 확인**: `google-site-verification` 메타 태그를 시작 화면(`/`)에만 넣었다(값은 `src/constants/site.ts`의 `GOOGLE_SITE_VERIFICATION`). 확인이 끝난 뒤에도 지우지 않는다. 확인과 사이트맵 제출은 배포 후 서치콘솔에서 사용자가 직접 한다(사이트맵 주소: `/sitemap.xml`).
 - **알아 둘 점**: 회사 사이트에 있는 구글 애널리틱스, 애드센스, 검색엔진 소유 확인 태그는 이 앱에 넣지 않았다(승인 없이 외부 분석 서비스를 추가하지 않는 규칙). 검색 노출을 원하면 구글 서치콘솔에 이 주소를 따로 등록해야 한다. 가격과 견적 등 나머지 화면은 검색 제외와 별개로, 내용이 화면을 연 뒤 불러와지는 구조라 검색용 페이지가 아니다.
+
+## 8-2. 리스료 계산과 이미지 (2026-10-15)
+
+**리스료 계산** (`src/utils/lease.ts`, 화면은 `src/app/summary.tsx`의 `LeaseSection`)
+- 기본 리스료 식은 회사 사이트 리스료 계산기(`itsolvers/web/html/insights/lease-payment-calculator.html`)와 같다. 원본 파일에서 식을 꺼내 무작위 5,000개 조합(선납금·보증금 0)과 대조해 모두 같은 값(차이 0원)임을 확인했다. 회사 계산기에 없는 선납금(월 `S÷n` 차감)과 보증금(월 `D×i` 차감, 만기 반환 가정)은 이 앱에서 더한 것이다. 상세 식과 가정은 `docs/APP_SPEC.md` 5장.
+- 화면의 기본 리스료, 선납금 차감, 보증금 효과는 각각 원 단위로 반올림해서 월 납입금액과 정확히 맞는다.
+- 선납금·보증금·잔존가치는 차량가격 기준 비율(5~30%) 버튼으로 금액을 채우거나 금액을 직접 입력한다. 계산에는 항상 금액을 쓴다.
+- 보증금을 "만기에 돌려받는 돈"으로 보고 월 이자만큼 월 납입금을 줄이는 방식은 이 앱의 가정이다. 금융사마다 다를 수 있다.
+
+**이미지** (`src/utils/images.ts`, 제조사 사이트에서 앱 실행 중 불러오며 저장소에는 파일을 두지 않는다)
+- 차종 이미지: `/contents/repn-car/side-45/{이름}-45side.png`. 파일 이름이 차종 영문 이름과 다른 경우가 있어서 6개 차종은 `CAR_IMAGE_NAMES` 표로 지정했다(직접 불러 보고 현재 판매 모델 그림이 나오는 이름을 골랐다). **새 차종이 생기면 이 표에 추가해야 한다.**
+- 색상 칩: `/contents/vr360/{차종코드}/exterior|interior/{색상코드}/colorchip-*.png`. 내장 색상은 사이트가 쓰는 "실제 색상 코드" 대신 일반 색상 코드로도 두 차종에서 그림이 왔고, 없는 코드는 오류(307)로 응답한다.
+- 제조사 엠블럼: `/static/images/logo_mobile_black.png`(검은색이라 흰 바탕 위에 놓는다).
+- 이미지가 없거나 불러오지 못해도 화면은 정상이다(`RemoteImage`가 빈 자리나 회색으로 처리).
+- 이 주소들은 공개된 약속이 아니라 사이트가 쓰는 것을 확인한 것이라 바뀔 수 있다. 제조사의 엠블럼과 이미지는 저작물·상표이므로 학습용 안내와 함께 쓰고 수정하거나 재배포하지 않는다.
 
 ## 9. 의도적으로 하지 않는 것
 

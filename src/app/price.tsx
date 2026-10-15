@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DataNotice } from '@/components/data-notice';
 import { LoadStatus } from '@/components/load-status';
+import { RemoteImage } from '@/components/remote-image';
 import { Section } from '@/components/section';
 import { SelectRow } from '@/components/select-row';
 import { PriceDisclaimer, StudyNotice } from '@/components/study-notice';
@@ -31,17 +32,26 @@ import { useTheme } from '@/hooks/use-theme';
 import type { LoadResult } from '@/storage/cache';
 import { getTrimPrice } from '@/storage/vehicleData';
 import type { TrimPrice } from '@/types/car';
+import { carImageUrl, colorChipUrl } from '@/utils/images';
 import { calcBreakdown, formatExtra, formatPrice, isOptionAvailable } from '@/utils/price';
 
 // 차량 선택 완료 화면에 넘겨서 쓰는 트림 정보
-type TrimInfo = { brand: string; carName: string; engineName: string; trimName: string; saleModelCode: string };
+type TrimInfo = {
+  brand: string;
+  car: string; // 차종 코드. 차량 이미지와 색상 이미지 주소를 만드는 데 쓴다
+  carName: string;
+  engineName: string;
+  trimName: string;
+  saleModelCode: string;
+};
 
 export default function PriceScreen() {
   // 트림 화면이 넘긴 값들을 읽는다. 모두 선택적(?)이다. 주소로 전달되는 값은 항상 있다고 보장할 수 없기 때문이다.
-  const { saleModelCode, title, brand, carName, engineName, trimName } = useLocalSearchParams<{
+  const { saleModelCode, title, brand, car, carName, engineName, trimName } = useLocalSearchParams<{
     saleModelCode?: string;
     title?: string;
     brand?: string;
+    car?: string;
     carName?: string;
     engineName?: string;
     trimName?: string;
@@ -74,6 +84,7 @@ export default function PriceScreen() {
           title={title ?? ''}
           trim={{
             brand: brand ?? '',
+            car: car ?? '',
             carName: carName ?? '',
             engineName: engineName ?? '',
             trimName: trimName ?? '',
@@ -111,6 +122,10 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={[styles.scroll, { paddingBottom: Spacing.four }]}>
+        {/* 선택한 차종의 이미지 (흰 바탕 위). 이미지가 없는 차종이면 빈 자리만 남는다 */}
+        <ThemedView style={styles.carImageArea}>
+          <RemoteImage uri={carImageUrl(trim.car)} label={trim.carName} style={styles.carImage} />
+        </ThemedView>
         <ThemedText type="subtitle" style={styles.title}>
           {title}
         </ThemedText>
@@ -175,6 +190,8 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
               mode="radio"
               title={color.name}
               rightText={formatExtra(color.price)}
+              // 색상 이름 앞에 해당 색상을 동그랗게 보여준다 (제조사의 색상 칩 이미지)
+              swatchUri={colorChipUrl(trim.car, 'interior', color.code) ?? ''}
               selected={selection.interiorCode === color.code}
               onPress={() => setInterior(color.code)}
             />
@@ -188,6 +205,7 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
               mode="radio"
               title={color.name}
               rightText={formatExtra(color.price)}
+              swatchUri={colorChipUrl(trim.car, 'exterior', color.code) ?? ''}
               selected={selection.exteriorCode === color.code}
               onPress={() => setExterior(color.code)}
             />
@@ -256,6 +274,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   title: { fontSize: 24, lineHeight: 32 },
+  carImageArea: {
+    backgroundColor: '#ffffff',
+    borderRadius: Spacing.three,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.two,
+  },
+  carImage: { width: '100%', height: 150 },
   warning: { color: '#c0392b' },
   footer: {
     paddingHorizontal: Spacing.three,

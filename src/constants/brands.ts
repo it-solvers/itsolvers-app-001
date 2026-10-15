@@ -1,3 +1,5 @@
+import { HYUNDAI_EMBLEM_URL } from '@/utils/images';
+
 // 지원하는 제조사 목록. 새 제조사를 추가하려면 api, storage에 해당 제조사 코드를 만든 뒤 여기에 추가한다.
 //
 // [왜 상수 파일로 두나?]
@@ -11,9 +13,10 @@ export type BrandId = 'hyundai';
 export type Brand = {
   id: BrandId; // 코드에서 쓰는 이름 (화면 주소의 brand=hyundai 로도 전달된다)
   name: string; // 화면에 보여줄 이름
+  logoUrl: string; // 제조사 엠블럼 이미지 주소 (제조사 사이트에서 불러온다)
 };
 
-export const BRANDS: Brand[] = [{ id: 'hyundai', name: '현대자동차' }];
+export const BRANDS: Brand[] = [{ id: 'hyundai', name: '현대자동차', logoUrl: HYUNDAI_EMBLEM_URL }];
 
 /**
  * 주소로 전달받은 id 글자로 제조사를 찾는다. 없으면 undefined.

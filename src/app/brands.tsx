@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { FlatList, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BrandLogo } from '@/components/brand-logo';
 import { ListRow } from '@/components/list-row';
 import { StudyNotice } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
@@ -40,6 +41,8 @@ export default function BrandsScreen() {
         renderItem={({ item }) => (
           <ListRow
             title={item.name}
+            // 글자 왼쪽에 제조사 엠블럼을 보여준다
+            leading={<BrandLogo uri={item.logoUrl} name={item.name} />}
             // router.push 의 params 는 다음 화면에 "주소 값"으로 전달된다. (다음 화면은 useLocalSearchParams 로 읽는다)
             onPress={() => router.push({ pathname: '/cars', params: { brand: item.id } })}
           />

@@ -3,6 +3,7 @@
 // 컴포넌트 = 화면 조각. 같은 모양을 여러 화면에서 쓰려고 한 번만 만들어 두었다.
 // ============================================================================
 
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -14,14 +15,16 @@ type ListRowProps = {
   title: string; // 크게 보이는 글자
   subtitle?: string; // 그 아래 작게 보이는 보조 글자
   onPress?: () => void; // 없으면 눌러도 반응하지 않는 행
+  leading?: ReactNode; // 글자 왼쪽에 놓을 그림 (예: 제조사 엠블럼)
 };
 
-export function ListRow({ title, subtitle, onPress }: ListRowProps) {
+export function ListRow({ title, subtitle, onPress, leading }: ListRowProps) {
   // 라이트/다크 모드에 맞는 색상 표
   const theme = useTheme();
   // 행의 안쪽 내용. 눌리는 행과 눌리지 않는 행이 같은 내용을 쓰므로 변수에 담아 재사용한다.
   const content = (
     <>
+      {leading}
       <View style={styles.texts}>
         <ThemedText type="default">{title}</ThemedText>
         {subtitle ? (

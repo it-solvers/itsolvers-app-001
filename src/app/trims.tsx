@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DataNotice } from '@/components/data-notice';
 import { ListRow } from '@/components/list-row';
 import { LoadStatus } from '@/components/load-status';
+import { RemoteImage } from '@/components/remote-image';
 import { StudyNotice } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -21,6 +22,7 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useLoad } from '@/hooks/use-load';
 import { getTrims } from '@/storage/vehicleData';
 import type { Trim } from '@/types/car';
+import { carImageUrl } from '@/utils/images';
 import { trimPurposeName } from '@/utils/trim';
 
 // SectionList 가 요구하는 묶음 모양: 제목(title)과 그 아래 항목들(data)
@@ -111,6 +113,7 @@ export default function TrimsScreen() {
                   pathname: '/price',
                   params: {
                     brand: brand ?? '',
+                    car: car ?? '', // 가격 화면에서 차량 이미지와 색상 이미지 주소를 만드는 데 쓴다
                     saleModelCode: item.saleModelCode,
                     title: priceTitle(carName, item),
                     carName: carName ?? '',
@@ -123,6 +126,10 @@ export default function TrimsScreen() {
           )}
           ListHeaderComponent={
             <ThemedView style={styles.header}>
+              {/* 목록 맨 위에 선택한 차종의 이미지를 보여준다 (흰 바탕 위) */}
+              <ThemedView style={styles.carImageArea}>
+                <RemoteImage uri={carImageUrl(car)} label={carName} style={styles.carImage} />
+              </ThemedView>
               <DataNotice result={state.result} />
             </ThemedView>
           }
@@ -145,6 +152,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   separator: { height: Spacing.two },
-  header: { marginBottom: Spacing.two },
+  header: { marginBottom: Spacing.two, gap: Spacing.two },
+  carImageArea: {
+    backgroundColor: '#ffffff',
+    borderRadius: Spacing.three,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.two,
+  },
+  carImage: { width: '100%', height: 150 },
   sectionHeader: { marginTop: Spacing.three, marginBottom: Spacing.two },
 });

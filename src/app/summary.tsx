@@ -1,21 +1,30 @@
 // ============================================================================
 // 차량 선택 완료 화면 ("/summary?...").  가격 화면에서 "차량 선택 완료"를 눌렀을 때 열린다.
-// 지금까지 고른 제조사, 차종, 트림, 사양, 옵션, 색상과 합계를 한 화면에 정리해서 "보여주기만" 한다.
+//
+// [화면 구성]
+//   1) 차량 선택 정보: 제조사, 차종, 트림, 사양, 선택 옵션, 색상, 그리고 마지막에 "차량가격"
+//   2) 리스료 계산: 기간, 선납금, 보증금, 잔존가치, 금리를 고르거나 입력하면 월 납입금액이 바로 계산된다
+//   (합계를 화면 맨 아래에 고정해 두지 않는다. 입력 칸이 많아서 고정 영역이 키보드를 가리기 때문이다.)
 //
 // [선택한 내용을 어떻게 받나?]
 // 가격 화면은 고른 내용을 "코드 글자"로 주소에 실어 보낸다. (예: optionCodes=HIE,PA1)
 // 이 화면은 그 코드를 읽어서 가격 데이터(오늘 저장된 것이 있어 보통 바로 열린다)에서
 // 이름과 가격을 찾아 보여준다. 이름과 가격을 직접 넘기지 않고 코드만 넘기는 이유는, 같은 정보를
-// 두 군데에 두면 서로 달라질 수 있고, 합계도 가격 화면과 같은 계산 함수를 그대로 쓰기 위해서다.
+// 두 군데에 두면 서로 달라질 수 있고, 차량가격도 가격 화면과 같은 계산 함수를 그대로 쓰기 위해서다.
+// 리스료 계산 자체는 화면과 분리된 순수 함수(src/utils/lease.ts)가 한다.
 // ============================================================================
 
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCallback, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { AmountInput } from '@/components/amount-input';
+import { BrandLogo } from '@/components/brand-logo';
+import { ColorDot } from '@/components/color-dot';
 import { DataNotice } from '@/components/data-notice';
 import { LoadStatus } from '@/components/load-status';
+import { PercentChips } from '@/components/percent-chips';
+import { RemoteImage } from '@/components/remote-image';
 import { Section } from '@/components/section';
 import { PriceDisclaimer, StudyNotice } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
@@ -23,16 +32,26 @@ import { ThemedView } from '@/components/themed-view';
 import { findBrand } from '@/constants/brands';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useLoad } from '@/hooks/use-load';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 import type { LoadResult } from '@/storage/cache';
 import { getTrimPrice } from '@/storage/vehicleData';
 import type { TrimPrice } from '@/types/car';
+import {
+  calcLeasePayment,
+  LEASE_PERCENTS,
+  LEASE_TERMS,
+  parseNumberText,
+  percentAmount,
+} from '@/utils/lease';
+import { carImageUrl, colorChipUrl } from '@/utils/images';
 import { calcBreakdown, formatExtra, formatPrice, selectedItems, type Selection } from '@/utils/price';
 import { trimPurposeName } from '@/utils/trim';
 
 // 가격 화면이 주소로 넘겨주는 값들. 주소 값은 글자만 가능하므로 모두 string 이고, 없을 수도 있다(?).
 type Params = {
   brand?: string;
+  car?: string; // 차종 코드 (이미지 주소를 만드는 데 쓴다)
   carName?: string;
   engineName?: string;
   trimName?: string;
@@ -100,8 +119,6 @@ function SummaryBody({
   result: LoadResult<TrimPrice>;
 }) {
   const price = result.data;
-  const theme = useTheme();
-  const insets = useSafeAreaInsets();
   // items: 고른 코드를 실제 사양/옵션/색상 정보로 바꾼 것, breakdown: 합계.
   // 둘 다 가격 화면과 같은 함수(utils/price.ts)라서 두 화면의 금액이 어긋나지 않는다.
   const items = useMemo(() => selectedItems(price, selection), [price, selection]);
@@ -127,6 +144,18 @@ function SummaryBody({
 
         <Section title="차량">
           <Card>
+            {/* 제조사 엠블럼과 이름, 그 아래에 선택한 차종의 이미지 */}
+            {brand ? (
+              <View style={styles.brandRow}>
+                <BrandLogo uri={brand.logoUrl} name={brand.name} />
+                <ThemedText type="default" style={styles.brandName}>
+                  {brand.name}
+                </ThemedText>
+              </View>
+            ) : null}
+            <ThemedView style={styles.carImageArea}>
+              <RemoteImage uri={carImageUrl(params.car)} label={params.carName} style={styles.carImage} />
+            </ThemedView>
             <Line label="제조사" value={brand?.name ?? '-'} />
             <Line label="차종" value={params.carName || '-'} />
             <Line label="트림" value={trimLabel || '-'} />
@@ -164,32 +193,211 @@ function SummaryBody({
             <Line
               label={`내장 · ${items.interior?.name ?? '선택 안 함'}`}
               value={items.interior ? formatExtra(items.interior.price) : '-'}
+              // 고른 색상이 있으면 이름 앞에 그 색상을 동그랗게 보여준다
+              swatchUri={items.interior ? (colorChipUrl(params.car, 'interior', items.interior.code) ?? '') : undefined}
             />
             <Line
               label={`외장 · ${items.exterior?.name ?? '선택 안 함'}`}
               value={items.exterior ? formatExtra(items.exterior.price) : '-'}
+              swatchUri={items.exterior ? (colorChipUrl(params.car, 'exterior', items.exterior.code) ?? '') : undefined}
             />
           </Card>
         </Section>
-      </ScrollView>
 
-      {/* 아래쪽: 스크롤과 상관없이 항상 보이는 합계 영역 (가격 화면과 같은 모양) */}
-      <ThemedView
-        type="backgroundElement"
-        style={[styles.footer, { paddingBottom: insets.bottom + Spacing.two, borderTopColor: theme.backgroundSelected }]}>
-        <ThemedView type="backgroundElement" style={styles.totalRow}>
-          <ThemedText type="smallBold">합계</ThemedText>
-          <ThemedText type="subtitle" accessibilityLabel={`합계 ${formatPrice(breakdown.total)}`}>
-            {formatPrice(breakdown.total)}
-          </ThemedText>
-        </ThemedView>
-        <ThemedText type="small" themeColor="textSecondary">
-          {`사양 ${formatPrice(breakdown.specPrice)} + 옵션 ${formatPrice(breakdown.optionsPrice)} + 색상 ${formatPrice(breakdown.colorsPrice)}`}
-        </ThemedText>
+        {/* 차량 선택 정보의 마지막: 차량가격 (가격 화면의 합계와 같은 계산) */}
+        <Section title="차량가격">
+          <Card>
+            <Line label="사양" value={formatPrice(breakdown.specPrice)} />
+            <Line label="옵션" value={formatPrice(breakdown.optionsPrice)} />
+            <Line label="색상" value={formatPrice(breakdown.colorsPrice)} />
+            <View style={styles.divider} />
+            <View style={styles.totalRow}>
+              <ThemedText type="smallBold">차량가격</ThemedText>
+              <ThemedText type="subtitle" accessibilityLabel={`차량가격 ${formatPrice(breakdown.total)}`}>
+                {formatPrice(breakdown.total)}
+              </ThemedText>
+            </View>
+          </Card>
+        </Section>
+
+        {/* 아래쪽: 리스료 계산. 입력이 바뀔 때마다 월 납입금액이 바로 계산된다. */}
+        <LeaseSection vehiclePrice={breakdown.total} />
+
         {/* 금액이 보이는 화면에는 항상 "학습용" 안내를 눈에 띄는 색으로 함께 보여준다 (문구는 constants/notices.ts) */}
         <PriceDisclaimer />
-      </ThemedView>
+      </ScrollView>
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 리스료 계산 구역. 입력(기간, 선납금, 보증금, 잔존가치, 금리)과 결과(월 납입금액)를 보여준다.
+// 계산식은 src/utils/lease.ts 와 docs/APP_SPEC.md 5장에 있다.
+// ---------------------------------------------------------------------------
+function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
+  const theme = useTheme();
+  // 오류 글자색: 어두운 배경에서도 잘 보이도록 다크 모드에서는 밝은 빨강을 쓴다.
+  const errorColor = useColorScheme() === 'dark' ? '#ff8a80' : '#c0392b';
+  // 입력 칸이 들고 있는 값들. 금액은 숫자만 든 글자("2876000"), 금리는 "5.25"처럼 글자로 보관한다.
+  // (글자로 보관하는 이유: 입력 중인 "5." 같은 중간 상태를 그대로 보여줄 수 있어야 하기 때문이다)
+  const [termMonths, setTermMonths] = useState<number>(36); // 처음에는 36개월을 선택해 둔다
+  const [prepaidText, setPrepaidText] = useState('');
+  const [depositText, setDepositText] = useState('');
+  const [residualText, setResidualText] = useState('');
+  const [rateText, setRateText] = useState('');
+
+  // 비율 버튼을 눌렀을 때: 이미 선택된 비율이면 칸을 비우고, 아니면 "차량가격 × 비율" 금액으로 채운다.
+  const toggleAmountPercent = (current: string, percent: number, set: (text: string) => void) => {
+    const amount = String(percentAmount(vehiclePrice, percent));
+    set(current === amount ? '' : amount);
+  };
+  // 지금 칸의 금액이 어느 비율과 정확히 같은지 찾는다. (직접 고쳐 쓴 금액이면 null → 버튼 선택 표시가 꺼진다)
+  const selectedPercent = (text: string): number | null =>
+    LEASE_PERCENTS.find((percent) => String(percentAmount(vehiclePrice, percent)) === text) ?? null;
+
+  // 금리를 비우면 계산하지 않고 안내만 보여준다. 나머지 칸은 비우면 0원으로 본다.
+  const rateEmpty = rateText === '' || rateText === '.';
+  const result = useMemo(
+    () =>
+      rateEmpty
+        ? null
+        : calcLeasePayment({
+            vehiclePrice,
+            termMonths,
+            prepaid: parseNumberText(prepaidText),
+            deposit: parseNumberText(depositText),
+            residual: parseNumberText(residualText),
+            annualRatePercent: parseNumberText(rateText),
+          }),
+    [vehiclePrice, termMonths, prepaidText, depositText, residualText, rateText, rateEmpty],
+  );
+
+  return (
+    <Section title="리스료 계산">
+      <Card>
+        {/* 기간: 5개 중 하나만 고르는 버튼 줄 */}
+        <View style={styles.field}>
+          <ThemedText type="smallBold">기간 (개월)</ThemedText>
+          <View style={styles.termRow}>
+            {LEASE_TERMS.map((term) => {
+              const isSelected = term === termMonths;
+              return (
+                <Pressable
+                  key={term}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`기간 ${term}개월`}
+                  accessibilityState={{ selected: isSelected }}
+                  onPress={() => setTermMonths(term)}
+                  style={[
+                    styles.termChip,
+                    {
+                      backgroundColor: isSelected ? '#2563eb' : theme.background,
+                      borderColor: isSelected ? '#2563eb' : theme.backgroundSelected,
+                    },
+                  ]}>
+                  <ThemedText type="smallBold" style={{ color: isSelected ? '#ffffff' : theme.text }}>
+                    {term}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* 선납금, 보증금, 잔존가치: 비율 버튼으로 금액을 채우거나 금액을 직접 입력한다 */}
+        <View style={styles.field}>
+          <AmountInput
+            label="선납금"
+            unit="원"
+            kind="amount"
+            value={prepaidText}
+            onChangeText={setPrepaidText}
+            placeholder="0"
+            hint="처음에 내는 돈(장기선수금). 기간 동안 나눠서 월 납입금에서 뺍니다."
+          />
+          <PercentChips
+            label="선납금"
+            percents={LEASE_PERCENTS}
+            selected={selectedPercent(prepaidText)}
+            onSelect={(percent) => toggleAmountPercent(prepaidText, percent, setPrepaidText)}
+          />
+        </View>
+
+        <View style={styles.field}>
+          <AmountInput
+            label="보증금"
+            unit="원"
+            kind="amount"
+            value={depositText}
+            onChangeText={setDepositText}
+            placeholder="0"
+            hint="만기에 돌려받는 돈. 맡긴 돈의 월 이자만큼 월 납입금이 줄어듭니다."
+          />
+          <PercentChips
+            label="보증금"
+            percents={LEASE_PERCENTS}
+            selected={selectedPercent(depositText)}
+            onSelect={(percent) => toggleAmountPercent(depositText, percent, setDepositText)}
+          />
+        </View>
+
+        <View style={styles.field}>
+          <AmountInput
+            label="잔존가치"
+            unit="원"
+            kind="amount"
+            value={residualText}
+            onChangeText={setResidualText}
+            placeholder="0"
+            hint="만기 때 차량의 가치. 클수록 월 납입금이 줄어듭니다."
+          />
+          <PercentChips
+            label="잔존가치"
+            percents={LEASE_PERCENTS}
+            selected={selectedPercent(residualText)}
+            onSelect={(percent) => toggleAmountPercent(residualText, percent, setResidualText)}
+          />
+        </View>
+
+        <AmountInput
+          label="금리 (연 %)"
+          unit="%"
+          kind="rate"
+          value={rateText}
+          onChangeText={setRateText}
+          placeholder="예) 5.5"
+        />
+      </Card>
+
+      {/* 결과: 월 납입금액. 금리를 입력하기 전에는 안내만, 입력이 잘못되면 이유를 보여준다 */}
+      <Card>
+        {result === null ? (
+          <ThemedText themeColor="textSecondary">금리를 입력해 주세요. 입력하면 월 납입금액이 바로 계산됩니다.</ThemedText>
+        ) : result.ok ? (
+          <>
+            <View style={styles.totalRow}>
+              <ThemedText type="smallBold">월 납입금액</ThemedText>
+              <ThemedText type="subtitle" accessibilityLabel={`월 납입금액 ${formatPrice(result.monthlyPayment)}`}>
+                {formatPrice(result.monthlyPayment)}
+              </ThemedText>
+            </View>
+            {/* 계산 과정: 기본 리스료에서 선납금 차감과 보증금 효과를 뺀 것이 월 납입금액이다 */}
+            <Line label="기본 리스료" value={formatPrice(result.baseMonthly)} />
+            <Line label="선납금 차감 (선납금 ÷ 기간)" value={`− ${formatPrice(result.prepaidDeduction)}`} />
+            <Line label="보증금 효과 (보증금의 월 이자)" value={`− ${formatPrice(result.depositEffect)}`} />
+            <ThemedText type="small" themeColor="textSecondary">
+              부가세, 취득세·등록세, 보험료, 정비·수수료는 포함하지 않은 단순 계산입니다. 실제 금융사 견적과 다를 수
+              있습니다.
+            </ThemedText>
+          </>
+        ) : (
+          // 입력이 잘못되었을 때: 경고 색으로 이유를 알려 준다 (화면 낭독 기능이 바로 읽도록 alert)
+          <ThemedText accessibilityRole="alert" style={[styles.errorText, { color: errorColor }]}>
+            {result.error}
+          </ThemedText>
+        )}
+      </Card>
+    </Section>
   );
 }
 
@@ -204,9 +412,11 @@ function Card({ children }: { children: React.ReactNode }) {
 
 // 왼쪽에 항목, 오른쪽에 값. 항목이 길면 줄바꿈된다.
 // (lineLabel 은 flex: 1 이라 남는 공간을 차지하며 줄바꿈되고, lineValue 는 flexShrink: 0 이라 가격이 줄어들거나 잘리지 않는다.)
-function Line({ label, value }: { label: string; value: string }) {
+function Line({ label, value, swatchUri }: { label: string; value: string; swatchUri?: string }) {
   return (
     <View style={styles.line}>
+      {/* swatchUri 가 있으면(색상 줄) 이름 앞에 색상 동그라미를 붙인다 */}
+      {swatchUri !== undefined ? <ColorDot uri={swatchUri} /> : null}
       <ThemedText style={styles.lineLabel}>{label}</ThemedText>
       <ThemedText type="smallBold" style={styles.lineValue}>
         {value}
@@ -221,7 +431,7 @@ const styles = StyleSheet.create({
   scroll: {
     padding: Spacing.three,
     gap: Spacing.three,
-    paddingBottom: Spacing.four,
+    paddingBottom: Spacing.six,
     maxWidth: MaxContentWidth,
     width: '100%',
     alignSelf: 'center',
@@ -230,11 +440,29 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: Spacing.three },
   lineLabel: { flex: 1 },
   lineValue: { flexShrink: 0, textAlign: 'right' },
-  footer: {
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.three,
-    gap: Spacing.one,
-    borderTopWidth: StyleSheet.hairlineWidth,
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  brandName: { fontWeight: 600 },
+  carImageArea: {
+    backgroundColor: '#ffffff',
+    borderRadius: Spacing.three,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.two,
   },
+  carImage: { width: '100%', height: 150 },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: '#98a2b3', marginVertical: Spacing.one },
   totalRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  // 리스료 입력
+  field: { gap: Spacing.two },
+  // 기간 버튼 5개를 한 줄에 같은 폭으로 놓는다
+  termRow: { flexDirection: 'row', gap: Spacing.two },
+  termChip: {
+    flex: 1,
+    minHeight: 44, // 누르기 쉬운 터치 영역
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: Spacing.two,
+  },
+  errorText: { fontWeight: 600 },
 });
