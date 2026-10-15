@@ -154,6 +154,7 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 - **시작 화면(`/`)만 검색에 노출**: `index, follow`, 제목, 설명, 키워드, `canonical`, 공유 미리보기(`og:*`, `twitter:*`), 구조화 데이터(JSON-LD `WebApplication`)를 `src/app/index.tsx`에서 지정한다.
 - **나머지 화면은 검색 제외**: `src/app/_layout.tsx`의 기본 head에 `noindex, nofollow`를 두고, 시작 화면만 같은 이름의 태그로 덮어쓴다. (빌드한 HTML에서 6개 화면 모두 확인)
 - **한국어 표시**: `src/app/+html.tsx`에서 `lang="ko"`(기본값은 영어)
+- **시작 화면 헤더/푸터**: 회사 사이트(index.html)의 헤더(왼쪽 로고와 "아이티해결단", 오른쪽 링크)와 푸터(어두운 배경의 회사 정보)를 따랐다. `src/components/site-header.tsx`, `site-footer.tsx`, 문구는 `constants/site.ts`의 `FOOTER_LINES`. 로고(`assets/images/company-logo.png`)는 불투명한 흰 배경이라 회사 사이트처럼 다크 모드에서도 헤더를 흰색으로 둔다. 푸터의 대표자명과 사업자등록번호는 회사 사이트에 공개된 내용과 같다. 다른 화면(제조사 이후)에는 로고 헤더가 없다.
 - **파비콘**: 회사 로고. 웹 탭은 `public/images/logo.png`, 앱/웹 기본 아이콘은 `assets/images/favicon.png`(로고를 투명한 192x192 정사각형 안에 넣어 만듦)
 - **정적 파일(`public/`)**: `robots.txt`(`/_sitemap` 차단과 사이트맵 주소), `sitemap.xml`(시작 화면만), `images/logo.png`, `images/og-image.png`. 빌드하면 `dist/`로 복사된다.
 - **사이트 정보 한곳 관리**: `src/constants/site.ts`(주소, 제목, 설명, 이미지). **배포 주소(`SITE_URL`)를 바꾸면** `public/robots.txt`와 `public/sitemap.xml`의 주소도 함께 고쳐야 한다.

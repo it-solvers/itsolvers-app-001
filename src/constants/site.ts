@@ -24,3 +24,10 @@ export const DEFAULT_TITLE = '승용차 견적 확인 (학습용)';
 export const FAVICON_URL = '/images/logo.png';
 export const OG_IMAGE_URL = `${SITE_URL}/images/og-image.png`;
 export const OG_IMAGE_ALT = '아이티해결단 로고 및 대표 서비스';
+
+// ---- 시작 화면 상단(헤더)과 하단(푸터)에 보이는 회사 정보 ----
+// 아이티해결단 회사 사이트(/Users/dlgurpro/itsolvers/web/html/index.html)의 헤더와 푸터를 따랐다.
+// 푸터 문구는 회사 사이트에 공개된 내용과 같다. 빼고 싶으면 FOOTER_LINES 에서 해당 줄을 지우면 된다.
+export const COMPANY_NAME = '아이티해결단';
+export const COMPANY_URL = 'https://itsolvers.co.kr/';
+export const FOOTER_LINES = ['아이티해결단 (IT Solvers)', '대표 이혁', '사업자등록번호 364-11-03265'];

@@ -4,9 +4,10 @@
 // ============================================================================
 
 import { Stack, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
+import { SiteFooter } from '@/components/site-footer';
+import { SiteHeader } from '@/components/site-header';
 import { StudyNotice } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -21,6 +22,7 @@ import {
   SITE_URL,
 } from '@/constants/site';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 // 검색엔진에 알려 주는 구조화 데이터(JSON-LD). "이 페이지는 어떤 웹앱이고 누가 만들었는지"를 기계가 읽기 쉬운 형태로 적은 것이다.
 const STRUCTURED_DATA = {
@@ -38,8 +40,9 @@ const STRUCTURED_DATA = {
 export default function LandingScreen() {
   // useRouter: 다른 화면으로 이동하는 도구를 준다. (router.push('/brands') 처럼 사용)
   const router = useRouter();
-  // 안전 영역: 노치(카메라 구멍), 상태바, 하단 홈 바에 내용이 가려지지 않도록 비워야 할 여백의 크기.
-  const insets = useSafeAreaInsets();
+  // 라이트/다크 모드. 회사 사이트처럼 본문 영역 배경(옅은 파랑 계열)을 모드마다 다르게 쓴다.
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
 
   return (
     <ThemedView style={styles.container}>
@@ -78,21 +81,18 @@ export default function LandingScreen() {
 
         <script type="application/ld+json">{JSON.stringify(STRUCTURED_DATA)}</script>
       </WebHead>
-      {/* 모든 화면 위쪽에 보이는 "학습용" 안내 배너. 노치(카메라 구멍) 아래에 오도록 안전 영역만큼 위를 비운다 */}
-      <ThemedView style={{ paddingTop: insets.top }}>
-        <StudyNotice />
-      </ThemedView>
+      {/* 맨 위: 회사 로고와 이름이 있는 헤더 (노치 아래에 오도록 헤더 안에서 안전 영역을 비운다) */}
+      <SiteHeader />
+      {/* 그 아래: 모든 화면에 보이는 "학습용" 안내 배너 */}
+      <StudyNotice />
       {/* ScrollView: 글자가 커지거나 화면이 작아도 내용이 잘리지 않고 스크롤되게 한다 */}
       <ScrollView
-        contentContainerStyle={[
-          styles.scroll,
-          // 스타일을 배열로 넘기면 앞에서 뒤로 합쳐진다. 안전 영역 여백은 기기마다 달라서 코드로 계산한다.
-          // (위쪽 안전 영역은 위의 배너가 이미 비워 두었으므로 여기서는 일반 여백만 둔다)
-          { paddingTop: Spacing.five, paddingBottom: insets.bottom + Spacing.four },
-        ]}>
+        // 본문 영역 배경: 회사 사이트 첫 화면(hero)처럼 라이트는 옅은 파랑 흰색, 다크는 짙은 남색
+        style={{ backgroundColor: isDark ? '#0f172a' : '#f8faff' }}
+        contentContainerStyle={styles.scroll}>
         <ThemedView style={styles.hero}>
           <ThemedText type="subtitle" style={styles.heading}>
-            승용차 견적 확인
+            승용차 <Text style={styles.accent}>견적</Text> 확인
           </ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.centerText}>
             제조사, 차종, 트림, 옵션을 골라 가격을 확인해 볼 수 있습니다.
@@ -120,6 +120,8 @@ export default function LandingScreen() {
           <ThemedText style={styles.startButtonText}>견적하기</ThemedText>
         </Pressable>
       </ScrollView>
+      {/* 맨 아래: 회사 정보 푸터 (스크롤과 상관없이 화면 아래에 붙어 있다) */}
+      <SiteFooter />
     </ThemedView>
   );
 }
@@ -132,13 +134,17 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     gap: Spacing.four,
+    paddingVertical: Spacing.five,
     paddingHorizontal: Spacing.three,
     maxWidth: MaxContentWidth, // 큰 화면(태블릿, 웹)에서 내용이 너무 넓게 퍼지지 않도록 한다
     width: '100%',
     alignSelf: 'center',
   },
-  hero: { alignItems: 'center', gap: Spacing.two },
+  // 배경을 투명하게 둔다. (기본 배경색이 있으면 본문 영역 색 위에 상자가 도드라져 보인다)
+  hero: { alignItems: 'center', gap: Spacing.two, backgroundColor: 'transparent' },
   heading: { textAlign: 'center' },
+  // 회사 사이트의 hero 제목처럼 핵심 단어를 파란 강조색으로 보인다
+  accent: { color: '#2563eb' },
   centerText: { textAlign: 'center' },
   notice: { borderRadius: Spacing.three, padding: Spacing.three, gap: Spacing.two },
   startButton: {
@@ -146,7 +152,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: Spacing.three,
-    backgroundColor: '#3c87f7',
+    backgroundColor: '#2563eb', // 회사 사이트의 강조색
   },
   startButtonText: { color: '#ffffff', fontWeight: 700, fontSize: 18 },
 });
