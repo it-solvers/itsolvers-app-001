@@ -91,8 +91,18 @@ export async function fetchTrims(carCode: string): Promise<Trim[]> {
 
 // ---- 3. 가격과 옵션 ----
 
-type ColorItem = { colorCode: string; colorName: string };
-type InteriorColorItem = { interiorColorCode: string; interiorColorName: string; interiorColorPrice: string };
+type InteriorColorItem = {
+  interiorColorCode: string;
+  interiorColorName: string;
+  interiorColorPrice: string;
+  choiceYn: string; // "Y"면 이 트림에서 선택 가능
+};
+type ExteriorColorItem = {
+  exteriorColorCode: string;
+  exteriorColorName: string;
+  exteriorColorPrice: string;
+  choiceYn: string;
+};
 
 type OptionsResponse = {
   classChoice: {
@@ -100,16 +110,21 @@ type OptionsResponse = {
     saleModelName: string;
     carPrice: string;
     specPrice: string;
-    carClassExteriorColor: ColorItem[] | null;
   }[];
   optionChoice: { choiceOptionCode: string; choiceOptionName: string; choiceOptionPrice: string; saleSpecCode: string }[];
   optionTuix: { tuixOptionCode: string; tuixOptionName: string; tuixOptionPrice: string }[];
 };
 
 export async function fetchTrimPrice(saleModelCode: string): Promise<TrimPrice> {
-  const [data, interior] = await Promise.all([
+  const [data, interior, exterior] = await Promise.all([
     get<OptionsResponse>(`/options/${saleModelCode}`),
-    get<InteriorColorItem[]>(`/interior-color/${saleModelCode}`),
+    get<InteriorColorItem[]>(`/interior-color/${saleModelCode}`, { saleModelCode }),
+    get<ExteriorColorItem[]>(`/exterior-color/${saleModelCode}`, {
+      siteTypeCode: '',
+      saleModelCode,
+      interiorColorCode: '',
+      exteriorColorCode: '',
+    }),
   ]);
 
   const specs: Spec[] = requireArray(data.classChoice, '사양 목록').map((s) => ({
@@ -134,25 +149,28 @@ export async function fetchTrimPrice(saleModelCode: string): Promise<TrimPrice> 
     specCodes: allSpecCodes,
   }));
 
-  const interiorColors: CarColor[] = requireArray(interior, '내장 색상').map((c) => ({
-    code: c.interiorColorCode,
-    name: c.interiorColorName,
-    price: toNumber(c.interiorColorPrice, c.interiorColorName),
-  }));
+  // choiceYn이 "Y"인 색상만 이 트림에서 고를 수 있다.
+  const interiorColors: CarColor[] = requireArray(interior, '내장 색상')
+    .filter((c) => c.choiceYn === 'Y')
+    .map((c) => ({
+      code: c.interiorColorCode,
+      name: c.interiorColorName,
+      price: toNumber(c.interiorColorPrice, c.interiorColorName),
+    }));
 
-  // 외장 색상은 이름만 확인됨. 가격 필드는 아직 찾지 못해 0으로 둔다.
-  const exteriorMap = new Map<string, CarColor>();
-  for (const spec of data.classChoice) {
-    for (const c of spec.carClassExteriorColor ?? []) {
-      exteriorMap.set(c.colorCode, { code: c.colorCode, name: c.colorName, price: 0 });
-    }
-  }
+  const exteriorColors: CarColor[] = requireArray(exterior, '외장 색상')
+    .filter((c) => c.choiceYn === 'Y')
+    .map((c) => ({
+      code: c.exteriorColorCode,
+      name: c.exteriorColorName,
+      price: toNumber(c.exteriorColorPrice, c.exteriorColorName),
+    }));
 
   return {
     saleModelCode,
     specs,
     options: [...choiceOptions, ...tuixOptions],
     interiorColors,
-    exteriorColors: [...exteriorMap.values()],
+    exteriorColors,
   };
 }

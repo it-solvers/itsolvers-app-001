@@ -37,10 +37,11 @@
 ## 4. 폴더 구조
 
 ```
-src/app/         화면과 라우팅 (파일 이름 = 주소). 화면은 얇게 유지. _layout.tsx(스택), index.tsx(제조사), cars.tsx(차종)
-src/components/  여러 화면에서 실제로 재사용하는 UI 조각 (list-row.tsx 등)
+src/app/         화면과 라우팅 (파일 이름 = 주소). _layout.tsx(스택), index.tsx(제조사), cars.tsx(차종), trims.tsx(트림), price.tsx(가격)
+src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), load-status(로딩/오류), data-notice(데이터 기준일)
 src/constants/   템플릿 테마 값, brands.ts(지원 제조사 목록)
-src/hooks/       템플릿 훅 (색상 테마 등)
+src/hooks/       use-load(화면 데이터 불러오기), 템플릿 훅(색상 테마 등)
+src/utils/       price.ts(가격 표시와 합계 계산)
 src/api/         제조사 사이트 호출 코드 (hyundai.ts). 화면에서 fetch를 직접 쓰지 않는다
 src/storage/     저장 코드. cache.ts(JSON 파일 저장, 하루 1회 규칙), vehicleData.ts(화면이 호출하는 getCars/getTrims/getTrimPrice)
 src/types/       공통 TypeScript 타입 (car.ts: 차종/트림/사양/옵션/색상/가격)
@@ -134,6 +135,8 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 | 1. 차종 목록 | `/car/catalog-price` | `carCode`(예: DN26), `carAbbreviation`(DN), `carName`, `carTypeCode`(P=승용) |
 | 2. 엔진/트림 | `/dictionary/applied-trim-list?repnCarnCd={carCode}&carSpcCd=` | `engineTypes`, `trimList`(트림명, `saleModelCode`, 엔진·변속기 코드) |
 | 3. 가격과 옵션 | `/options/{saleModelCode}` | `classChoice[].carPrice`(기본 가격), `optionChoice[].choiceOptionPrice`, `optionTuix[].tuixOptionPrice`, `optionBasic`(기본 옵션 목록) |
+| 4. 내장 색상 | `/interior-color/{saleModelCode}?saleModelCode=...` | `interiorColorPrice`, `choiceYn`(Y면 이 트림에서 선택 가능) |
+| 5. 외장 색상 | `/exterior-color/{saleModelCode}?siteTypeCode=&saleModelCode=...&interiorColorCode=&exteriorColorCode=` | `exteriorColorPrice`(예: 세레니티 화이트 펄 +100,000, 매트 +300,000), `choiceYn` |
 
 가격 구조: 한 트림(`saleModelCode`) 안에 **사양 선택**(`classChoice`: 예 "기본" 28,760,000 / "인포테인먼트내비Ⅰ" 30,160,000 = +1,400,000)이 있고, 선택 옵션은 `saleSpecCode`("A,N" 등)로 어느 사양에서 고를 수 있는지 정해진다. 그래서 화면 흐름은 제조사 → 차종 → 트림 → **사양** → 옵션/색상이다. 합계 = 사양 가격 + 선택 옵션 + 색상 가격.
 
@@ -142,9 +145,10 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 아직 모르는 것
 
 - 1단계가 승용 외 차종까지 섞여 오는지, 승용만 필터링하는 방법 (`/car/type`은 `carTypeFlag`와 `siteTypeCode=E` 필요)
-- 색상: 내장 색상은 `/interior-color/{saleModelCode}`에 `interiorColorPrice`가 있다(확인한 트림은 모두 0). 외장 색상은 `/options`의 `carClassExteriorColor`에 이름만 있고 가격 필드가 안 보였다. `/exterior-color/{saleModelCode}`는 파라미터 불명으로 오류. 구현 때 확인
+- 색상 가격은 위 4, 5번 API로 해결했다. 외장 색상 API는 `siteTypeCode`, `interiorColorCode`, `exteriorColorCode`를 빈 값으로 보내도 전체 목록을 준다(사이트 코드에서 호출 인자를 확인). 내장 색상 선택에 따라 외장 색상 목록이 달라지는지는 확인하지 않았다.
 - `/trims`, `/car/sale-model-code/info`는 파라미터 조합이 복잡해 사용하지 않았다. 2단계의 `trimList`로 충분한지
 - 가격 필드가 문자열(`"28760000"`)로 오므로 숫자 변환·검증 필요
 - 선택 옵션끼리의 제약(함께 선택 불가/필수 선택)은 `/disable-option/`, `/option-required-choice` 등에 있을 수 있으나 미조사
 - 호출 빈도 제한 (앱에서 직접 호출은 시뮬레이터/에뮬레이터에서 성공함)
-- 승용 필터 결과는 6종(쏘나타·아반떼·그랜저와 각 Hybrid)이다. 그랜저 등 다른 승용(예: 택시/렌터카용 트림 `HS` 코드 등)이 트림 목록에 섞여 오는지 미확인
+- 승용 필터 결과는 6종(쏘나타·아반떼·그랜저와 각 Hybrid)이다. 쏘나타 트림 17개 중에는 같은 이름이 중복되는 것(Exclusive가 모델 코드 DNHS.../DNJS... 둘)과 BUSINESS 1/2가 있다. 렌터카·택시용으로 추정되나 확인하지 않았다.
+- 옵션 간 제약(함께 선택 불가, 필수 선택)은 `/disable-option/`, `/option-required-choice` 등에 있을 것으로 보이나 조회하지 않았다.
