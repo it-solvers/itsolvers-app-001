@@ -41,8 +41,9 @@ src/app/         화면과 라우팅 (파일 이름 = 주소). 화면은 얇게 
 src/components/  여러 화면에서 실제로 재사용하는 UI 조각
 src/constants/   템플릿 테마 값
 src/hooks/       템플릿 훅 (색상 테마 등)
+src/api/         제조사 사이트 호출 코드 (hyundai.ts). 화면에서 fetch를 직접 쓰지 않는다
 src/storage/     저장/조회 코드 (필요해질 때 생성)
-src/types/       공통 TypeScript 타입 (필요해질 때 생성)
+src/types/       공통 TypeScript 타입 (car.ts: 차종/트림/사양/옵션/색상/가격)
 assets/          이미지, 아이콘
 docs/            APP_SPEC.md, ARCHITECTURE.md
 ```
@@ -52,7 +53,7 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 ## 5. 데이터 흐름
 
 ```
-화면(src/app) → src/storage 함수 → 기기 내부 저장소
+화면(src/app) → src/storage 함수(예정) → src/api(제조사 사이트) / 기기 내부 저장소
 ```
 
 저장 실패는 `storage`에서 잡아 화면이 사용자에게 알릴 수 있는 형태로 돌려준다. 전역 상태 라이브러리는 도입하지 않는다.
@@ -101,6 +102,8 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 
 ## 10. 데이터 출처 조사: 현대자동차 (2026-10-15)
 
+구현: `src/api/hyundai.ts`의 `fetchCars`, `fetchTrims`, `fetchTrimPrice`. Node와 iOS(iPhone 16e)·Android(Galaxy_S23 에뮬레이터) 앱에서 실제 호출이 성공했다. 실기기는 미확인.
+
 읽기 전용 GET 요청으로 조사했다. 로그인이 필요 없고 JSON으로 응답한다. **공개 API가 아니라 사이트 내부용**이어서 예고 없이 바뀔 수 있다. HTML 파싱은 필요 없다. 가격 화면의 HTML에는 데이터가 비어 있고, 값은 아래 API로 따로 받아온다.
 
 - 기본 주소: `https://www.hyundai.com/kr/ko/e/api/product`
@@ -114,6 +117,8 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 | 2. 엔진/트림 | `/dictionary/applied-trim-list?repnCarnCd={carCode}&carSpcCd=` | `engineTypes`, `trimList`(트림명, `saleModelCode`, 엔진·변속기 코드) |
 | 3. 가격과 옵션 | `/options/{saleModelCode}` | `classChoice[].carPrice`(기본 가격), `optionChoice[].choiceOptionPrice`, `optionTuix[].tuixOptionPrice`, `optionBasic`(기본 옵션 목록) |
 
+가격 구조: 한 트림(`saleModelCode`) 안에 **사양 선택**(`classChoice`: 예 "기본" 28,760,000 / "인포테인먼트내비Ⅰ" 30,160,000 = +1,400,000)이 있고, 선택 옵션은 `saleSpecCode`("A,N" 등)로 어느 사양에서 고를 수 있는지 정해진다. 그래서 화면 흐름은 제조사 → 차종 → 트림 → **사양** → 옵션/색상이다. 합계 = 사양 가격 + 선택 옵션 + 색상 가격.
+
 확인된 예: 쏘나타 디 엣지(DN26) 가솔린 2.0 Premium(`DNJS4SBT8`) 기본 가격 28,760,000원, 선택 옵션 예 "하이패스" 200,000원.
 
 아직 모르는 것
@@ -123,4 +128,5 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 - `/trims`, `/car/sale-model-code/info`는 파라미터 조합이 복잡해 사용하지 않았다. 2단계의 `trimList`로 충분한지
 - 가격 필드가 문자열(`"28760000"`)로 오므로 숫자 변환·검증 필요
 - 선택 옵션끼리의 제약(함께 선택 불가/필수 선택)은 `/disable-option/`, `/option-required-choice` 등에 있을 수 있으나 미조사
-- 호출 빈도 제한, 요청 헤더(User-Agent 등) 요구 여부, 휴대폰 앱에서의 직접 호출 시 차단 여부 (curl로만 확인함)
+- 호출 빈도 제한 (앱에서 직접 호출은 시뮬레이터/에뮬레이터에서 성공함)
+- 승용 필터 결과는 6종(쏘나타·아반떼·그랜저와 각 Hybrid)이다. 그랜저 등 다른 승용(예: 택시/렌터카용 트림 `HS` 코드 등)이 트림 목록에 섞여 오는지 미확인
