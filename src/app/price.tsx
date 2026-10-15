@@ -33,7 +33,7 @@ import { getTrimPrice } from '@/storage/vehicleData';
 import type { TrimPrice } from '@/types/car';
 import { calcBreakdown, formatExtra, formatPrice, isOptionAvailable } from '@/utils/price';
 
-// 견적 확인 화면에 넘겨서 쓰는 트림 정보
+// 차량 선택 완료 화면에 넘겨서 쓰는 트림 정보
 type TrimInfo = { brand: string; carName: string; engineName: string; trimName: string; saleModelCode: string };
 
 export default function PriceScreen() {
@@ -195,7 +195,7 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
         </Section>
       </ScrollView>
 
-      {/* 아래쪽: 스크롤과 상관없이 항상 보이는 합계 영역 (오류 안내, 합계, 견적 확인 버튼, 참고용 문구) */}
+      {/* 아래쪽: 스크롤과 상관없이 항상 보이는 합계 영역 (오류 안내, 합계, 차량 선택 완료 버튼, 참고용 문구) */}
       <ThemedView
         type="backgroundElement"
         style={[styles.footer, { paddingBottom: insets.bottom + Spacing.two, borderTopColor: theme.backgroundSelected }]}>
@@ -214,7 +214,7 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
           {`사양 ${formatPrice(breakdown.specPrice)} + 옵션 ${formatPrice(breakdown.optionsPrice)} + 색상 ${formatPrice(breakdown.colorsPrice)}`}
         </ThemedText>
         {/*
-          견적 확인 버튼. 지금 고른 내용을 주소 값으로 만들어 다음 화면에 넘긴다.
+          차량 선택 완료 버튼. 지금 고른 내용을 주소 값으로 만들어 다음 화면에 넘긴다.
           주소 값은 글자만 전달되므로, 옵션 코드 배열은 쉼표로 이어 한 글자로 만들고(join),
           선택하지 않은 색상(null)은 빈 글자('')로 바꿔 보낸다. 견적 화면이 이것을 다시 풀어서 쓴다.
           규칙을 확인하는 중(busy)에는 아직 확정되지 않은 선택일 수 있어서 누를 수 없게 한다.
@@ -236,7 +236,7 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
             })
           }
           style={[styles.summaryButton, { opacity: busy ? 0.5 : 1 }]}>
-          <ThemedText style={styles.summaryButtonText}>{busy ? '옵션 조건 확인 중...' : '견적 확인'}</ThemedText>
+          <ThemedText style={styles.summaryButtonText}>{busy ? '옵션 조건 확인 중...' : '차량 선택 완료'}</ThemedText>
         </Pressable>
         {/* 금액이 보이는 화면에는 항상 "학습용" 안내를 눈에 띄는 색으로 함께 보여준다 (문구는 constants/notices.ts) */}
         <PriceDisclaimer />

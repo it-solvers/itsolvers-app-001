@@ -8,7 +8,7 @@
 //   cars.tsx    → "/cars"     차종 선택
 //   trims.tsx   → "/trims"    트림 선택
 //   price.tsx   → "/price"    가격 확인
-//   summary.tsx → "/summary"  견적 확인
+//   summary.tsx → "/summary"  차량 선택 완료
 // 이 파일(_layout.tsx)은 화면이 아니라, 위 화면들을 감싸는 공통 틀이다.
 //
 // [스택(Stack) 내비게이션]
@@ -60,7 +60,7 @@ export default function RootLayout() {
         <Stack.Screen name="cars" options={{ title: '차종 선택' }} />
         <Stack.Screen name="trims" options={{ title: '트림 선택' }} />
         <Stack.Screen name="price" options={{ title: '가격 확인' }} />
-        <Stack.Screen name="summary" options={{ title: '견적 확인' }} />
+        <Stack.Screen name="summary" options={{ title: '차량 선택 완료' }} />
       </Stack>
     </ThemeProvider>
   );

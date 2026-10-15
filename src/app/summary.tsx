@@ -1,5 +1,5 @@
 // ============================================================================
-// 견적 확인 화면 ("/summary?...").  가격 화면에서 "견적 확인"을 눌렀을 때 열린다.
+// 차량 선택 완료 화면 ("/summary?...").  가격 화면에서 "차량 선택 완료"를 눌렀을 때 열린다.
 // 지금까지 고른 제조사, 차종, 트림, 사양, 옵션, 색상과 합계를 한 화면에 정리해서 "보여주기만" 한다.
 //
 // [선택한 내용을 어떻게 받나?]
@@ -75,7 +75,7 @@ export default function SummaryScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: '견적 확인' }} />
+      <Stack.Screen options={{ title: '차량 선택 완료' }} />
       {/* 모든 화면 위쪽에 보이는 "학습용" 안내 배너 */}
       <StudyNotice />
       <LoadStatus

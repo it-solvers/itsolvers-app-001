@@ -105,7 +105,7 @@ export default function TrimsScreen() {
                 .filter(Boolean)
                 .join(' · ')}
               // 가격 화면에는 트림 코드(saleModelCode)로 가격을 조회하고, 나머지는 제목과
-              // 견적 확인 화면에서 쓸 이름들이다. 주소 값은 글자만 전달할 수 있어서 없는 값은 빈 글자('')로 보낸다.
+              // 차량 선택 완료 화면에서 쓸 이름들이다. 주소 값은 글자만 전달할 수 있어서 없는 값은 빈 글자('')로 보낸다.
               onPress={() =>
                 router.push({
                   pathname: '/price',
