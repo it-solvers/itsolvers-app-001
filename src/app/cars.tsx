@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DataNotice } from '@/components/data-notice';
 import { ListRow } from '@/components/list-row';
 import { LoadStatus } from '@/components/load-status';
+import { StudyNotice } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { findBrand } from '@/constants/brands';
@@ -50,6 +51,8 @@ export default function CarsScreen() {
     <ThemedView style={styles.container}>
       {/* 제목줄 글자를 이 화면 안에서 동적으로 정한다 (제조사 이름이 들어간다) */}
       <Stack.Screen options={{ title: `${brand.name} 차종` }} />
+      {/* 모든 화면 위쪽에 보이는 "학습용" 안내 배너 */}
+      <StudyNotice />
       {/* 불러오는 중이거나 오류일 때만 무언가를 그리고, 완료(ready)면 아무것도 그리지 않는다 */}
       <LoadStatus
         state={state}

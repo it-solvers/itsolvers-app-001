@@ -37,9 +37,9 @@
 ## 4. 폴더 구조
 
 ```
-src/app/         화면과 라우팅 (파일 이름 = 주소). _layout.tsx(스택), index.tsx(시작/랜딩), brands.tsx(제조사), cars.tsx(차종), trims.tsx(트림), price.tsx(가격), summary.tsx(견적 확인)
-src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), section(제목이 붙은 구역), load-status(로딩/오류), data-notice(데이터 기준일), 스플래시용 animated-icon
-src/constants/   템플릿 테마 값, brands.ts(지원 제조사 목록)
+src/app/         화면과 라우팅 (파일 이름 = 주소). +html.tsx(웹 HTML 틀), _layout.tsx(스택), index.tsx(시작/랜딩), brands.tsx(제조사), cars.tsx(차종), trims.tsx(트림), price.tsx(가격), summary.tsx(견적 확인)
+src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), section(제목이 붙은 구역), load-status(로딩/오류), data-notice(데이터 기준일), study-notice("학습용" 안내 배너와 하단 문구), web-head(웹 head 지정), 스플래시용 animated-icon
+src/constants/   템플릿 테마 값, brands.ts(지원 제조사 목록), site.ts(웹 검색/공유 정보), notices.ts(학습용 안내 문구)
 src/hooks/       use-load(화면 데이터 불러오기), use-option-selection(사양·옵션·색상 선택과 선택 규칙), 템플릿 훅(색상 테마 등)
 src/utils/       price.ts(가격 표시, 선택한 항목 목록, 합계 계산), options.ts(옵션 선택 목록 변경 규칙), trim.ts(트림 구매 용도)
 src/api/         제조사 사이트 호출 코드 (hyundai.ts). 화면에서 fetch를 직접 쓰지 않는다
@@ -124,6 +124,8 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 | 2026-10-15 | 옵션 규칙 조회 실패 시: 변경을 적용하지 않고 오류 표시, 재시도는 다시 누르기 | 확정 |
 | 2026-10-15 | 견적 확인 화면 추가. 가격 화면에서 고른 내용(사양·옵션·색상 코드)을 화면 주소 값으로 넘기고, 견적 화면이 가격 데이터를 다시 불러(보통 오늘 저장본)와 같은 계산으로 보여줌. 선택 상태를 저장하거나 공유하지 않음 | 확정 |
 | 2026-10-15 | 시작(랜딩) 화면 추가: 학습용이며 데이터가 정확하지 않을 수 있다는 안내와 "견적하기" 버튼. 첫 화면(`/`)을 시작 화면으로 바꾸고 제조사 선택은 `/brands`로 이동 | 확정 |
+| 2026-10-15 | 모든 화면 위쪽에 "학습용" 배너(노란 계열), 금액 화면 하단 문구에 "학습용" 포함. 문구는 `constants/notices.ts` 한곳 | 확정 |
+| 2026-10-15 | 웹 SEO: 시작 화면만 검색 노출, 나머지 noindex. 파비콘·공유 이미지는 회사 사이트(`itsolvers/web/html`) 기준 | 확정 |
 | 2026-10-15 | 개발 서버 포트 8082 | 확정 |
 | 2026-10-15 | `.git`: 생성 도구가 자동 생성한 저장소(Initial commit 1개)를 유지 | 임시 (변경 가능) |
 | 2026-10-15 | 앱 기능: 국내 승용차 가격 조회 (차량→트림→옵션). 1단계는 현대자동차 승용차만 | 확정 |
@@ -144,6 +146,19 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 - 현대자동차 API는 `access-control-allow-origin: *`를 보내고 이 앱은 단순 `GET`만 쓰므로, 브라우저에서 서버 중계 없이 직접 호출된다. (실제 브라우저 동작은 배포 후 확인 필요)
 - 웹에서는 `expo-file-system`이 지원되지 않아 "하루 1회 저장"이 동작하지 않는다(화면을 열 때마다 새로 불러오고, 저장 실패 안내가 보일 수 있음).
 - 공개 링크이므로 아는 사람에게만 공유하고, 확인이 끝나면 배포를 삭제한다. 제조사 사이트 이용약관은 아직 읽지 않았다.
+
+### 웹 검색(SEO)과 사이트 설정 (2026-10-15)
+
+기준: `/Users/dlgurpro/itsolvers/web/html/`(회사 사이트)의 방식. 파비콘과 공유 이미지는 그 사이트의 파일을 그대로 복사했고(해시 동일 확인), 그 폴더는 수정하지 않았다.
+
+- **시작 화면(`/`)만 검색에 노출**: `index, follow`, 제목, 설명, 키워드, `canonical`, 공유 미리보기(`og:*`, `twitter:*`), 구조화 데이터(JSON-LD `WebApplication`)를 `src/app/index.tsx`에서 지정한다.
+- **나머지 화면은 검색 제외**: `src/app/_layout.tsx`의 기본 head에 `noindex, nofollow`를 두고, 시작 화면만 같은 이름의 태그로 덮어쓴다. (빌드한 HTML에서 6개 화면 모두 확인)
+- **한국어 표시**: `src/app/+html.tsx`에서 `lang="ko"`(기본값은 영어)
+- **파비콘**: 회사 로고. 웹 탭은 `public/images/logo.png`, 앱/웹 기본 아이콘은 `assets/images/favicon.png`(로고를 투명한 192x192 정사각형 안에 넣어 만듦)
+- **정적 파일(`public/`)**: `robots.txt`(`/_sitemap` 차단과 사이트맵 주소), `sitemap.xml`(시작 화면만), `images/logo.png`, `images/og-image.png`. 빌드하면 `dist/`로 복사된다.
+- **사이트 정보 한곳 관리**: `src/constants/site.ts`(주소, 제목, 설명, 이미지). **배포 주소(`SITE_URL`)를 바꾸면** `public/robots.txt`와 `public/sitemap.xml`의 주소도 함께 고쳐야 한다.
+- **앱(iOS/Android)에는 영향 없음**: head 지정은 `web-head.tsx`(앱: 아무 일 안 함)와 `web-head.web.tsx`(웹: 실제 지정)로 나눴다.
+- **알아 둘 점**: 회사 사이트에 있는 구글 애널리틱스, 애드센스, 검색엔진 소유 확인 태그는 이 앱에 넣지 않았다(승인 없이 외부 분석 서비스를 추가하지 않는 규칙). 검색 노출을 원하면 구글 서치콘솔에 이 주소를 따로 등록해야 한다. 가격과 견적 등 나머지 화면은 검색 제외와 별개로, 내용이 화면을 연 뒤 불러와지는 구조라 검색용 페이지가 아니다.
 
 ## 9. 의도적으로 하지 않는 것
 

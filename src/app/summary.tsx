@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DataNotice } from '@/components/data-notice';
 import { LoadStatus } from '@/components/load-status';
 import { Section } from '@/components/section';
+import { PriceDisclaimer, StudyNotice } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { findBrand } from '@/constants/brands';
@@ -28,9 +29,6 @@ import { getTrimPrice } from '@/storage/vehicleData';
 import type { TrimPrice } from '@/types/car';
 import { calcBreakdown, formatExtra, formatPrice, selectedItems, type Selection } from '@/utils/price';
 import { trimPurposeName } from '@/utils/trim';
-
-const DISCLAIMER =
-  '참고용 가격입니다. 실제 구매 가격은 제조사 또는 영업점에서 반드시 확인하세요.';
 
 // 가격 화면이 주소로 넘겨주는 값들. 주소 값은 글자만 가능하므로 모두 string 이고, 없을 수도 있다(?).
 type Params = {
@@ -78,6 +76,8 @@ export default function SummaryScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: '견적 확인' }} />
+      {/* 모든 화면 위쪽에 보이는 "학습용" 안내 배너 */}
+      <StudyNotice />
       <LoadStatus
         state={state}
         loadingText="견적을 불러오는 중입니다."
@@ -186,9 +186,8 @@ function SummaryBody({
         <ThemedText type="small" themeColor="textSecondary">
           {`사양 ${formatPrice(breakdown.specPrice)} + 옵션 ${formatPrice(breakdown.optionsPrice)} + 색상 ${formatPrice(breakdown.colorsPrice)}`}
         </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {DISCLAIMER}
-        </ThemedText>
+        {/* 금액이 보이는 화면에는 항상 "학습용" 안내를 눈에 띄는 색으로 함께 보여준다 (문구는 constants/notices.ts) */}
+        <PriceDisclaimer />
       </ThemedView>
     </>
   );

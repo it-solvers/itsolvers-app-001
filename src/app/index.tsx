@@ -7,9 +7,32 @@ import { Stack, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { StudyNotice } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { WebHead } from '@/components/web-head';
+import {
+  LANDING_DESCRIPTION,
+  LANDING_KEYWORDS,
+  LANDING_TITLE,
+  OG_IMAGE_ALT,
+  OG_IMAGE_URL,
+  SITE_NAME,
+  SITE_URL,
+} from '@/constants/site';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+
+// 검색엔진에 알려 주는 구조화 데이터(JSON-LD). "이 페이지는 어떤 웹앱이고 누가 만들었는지"를 기계가 읽기 쉬운 형태로 적은 것이다.
+const STRUCTURED_DATA = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: '승용차 견적 확인 (학습용)',
+  url: `${SITE_URL}/`,
+  description: LANDING_DESCRIPTION,
+  inLanguage: 'ko',
+  applicationCategory: 'UtilitiesApplication',
+  publisher: { '@type': 'Organization', name: SITE_NAME, url: 'https://itsolvers.co.kr/' },
+};
 
 // 시작(랜딩) 화면. 안내 문구를 보여주고 "견적하기"로 제조사 선택부터 시작한다.
 export default function LandingScreen() {
@@ -22,12 +45,50 @@ export default function LandingScreen() {
     <ThemedView style={styles.container}>
       {/* 이 화면의 제목줄(헤더)을 숨긴다 */}
       <Stack.Screen options={{ headerShown: false }} />
+      {/*
+        웹 전용: 시작 화면만 검색엔진에 노출한다 (SEO). 앱에서는 아무것도 하지 않는다.
+        _layout.tsx 의 기본값(noindex)을 같은 이름의 robots 태그로 덮어쓴다.
+          title / description / keywords  검색 결과에 보이는 제목, 설명, 키워드
+          canonical                       이 페이지의 대표 주소(같은 내용의 다른 주소가 있어도 이 주소로 모아 달라는 뜻)
+          og:*                            카카오톡, 페이스북, 네이버 밴드 등으로 링크를 공유할 때의 미리보기
+          twitter:*                       트위터(X) 공유 미리보기
+          application/ld+json             위에서 정의한 구조화 데이터
+      */}
+      <WebHead>
+        <title>{LANDING_TITLE}</title>
+        <meta name="description" content={LANDING_DESCRIPTION} />
+        <meta name="keywords" content={LANDING_KEYWORDS} />
+        <meta name="author" content={SITE_NAME} />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href={`${SITE_URL}/`} />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:locale" content="ko_KR" />
+        <meta property="og:site_name" content={SITE_NAME} />
+        <meta property="og:title" content={LANDING_TITLE} />
+        <meta property="og:description" content={LANDING_DESCRIPTION} />
+        <meta property="og:url" content={`${SITE_URL}/`} />
+        <meta property="og:image" content={OG_IMAGE_URL} />
+        <meta property="og:image:alt" content={OG_IMAGE_ALT} />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={LANDING_TITLE} />
+        <meta name="twitter:description" content={LANDING_DESCRIPTION} />
+        <meta name="twitter:image" content={OG_IMAGE_URL} />
+
+        <script type="application/ld+json">{JSON.stringify(STRUCTURED_DATA)}</script>
+      </WebHead>
+      {/* 모든 화면 위쪽에 보이는 "학습용" 안내 배너. 노치(카메라 구멍) 아래에 오도록 안전 영역만큼 위를 비운다 */}
+      <ThemedView style={{ paddingTop: insets.top }}>
+        <StudyNotice />
+      </ThemedView>
       {/* ScrollView: 글자가 커지거나 화면이 작아도 내용이 잘리지 않고 스크롤되게 한다 */}
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
           // 스타일을 배열로 넘기면 앞에서 뒤로 합쳐진다. 안전 영역 여백은 기기마다 달라서 코드로 계산한다.
-          { paddingTop: insets.top + Spacing.five, paddingBottom: insets.bottom + Spacing.four },
+          // (위쪽 안전 영역은 위의 배너가 이미 비워 두었으므로 여기서는 일반 여백만 둔다)
+          { paddingTop: Spacing.five, paddingBottom: insets.bottom + Spacing.four },
         ]}>
         <ThemedView style={styles.hero}>
           <ThemedText type="subtitle" style={styles.heading}>

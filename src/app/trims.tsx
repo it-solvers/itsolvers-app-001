@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DataNotice } from '@/components/data-notice';
 import { ListRow } from '@/components/list-row';
 import { LoadStatus } from '@/components/load-status';
+import { StudyNotice } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -72,6 +73,8 @@ export default function TrimsScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: carName ?? '트림 선택' }} />
+      {/* 모든 화면 위쪽에 보이는 "학습용" 안내 배너 */}
+      <StudyNotice />
       <LoadStatus
         state={state}
         loadingText="트림을 불러오는 중입니다."

@@ -21,6 +21,7 @@ import { DataNotice } from '@/components/data-notice';
 import { LoadStatus } from '@/components/load-status';
 import { Section } from '@/components/section';
 import { SelectRow } from '@/components/select-row';
+import { PriceDisclaimer, StudyNotice } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -31,10 +32,6 @@ import type { LoadResult } from '@/storage/cache';
 import { getTrimPrice } from '@/storage/vehicleData';
 import type { TrimPrice } from '@/types/car';
 import { calcBreakdown, formatExtra, formatPrice, isOptionAvailable } from '@/utils/price';
-
-// 가격이 보이는 화면에는 항상 이 안내를 함께 보여준다.
-const DISCLAIMER =
-  '참고용 가격입니다. 실제 구매 가격은 제조사 또는 영업점에서 반드시 확인하세요.';
 
 // 견적 확인 화면에 넘겨서 쓰는 트림 정보
 type TrimInfo = { brand: string; carName: string; engineName: string; trimName: string; saleModelCode: string };
@@ -64,6 +61,8 @@ export default function PriceScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: '가격 확인' }} />
+      {/* 모든 화면 위쪽에 보이는 "학습용" 안내 배너 (불러오는 중이나 오류일 때도 보인다) */}
+      <StudyNotice />
       <LoadStatus
         state={state}
         loadingText="가격을 불러오는 중입니다."
@@ -239,9 +238,8 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
           style={[styles.summaryButton, { opacity: busy ? 0.5 : 1 }]}>
           <ThemedText style={styles.summaryButtonText}>{busy ? '옵션 조건 확인 중...' : '견적 확인'}</ThemedText>
         </Pressable>
-        <ThemedText type="small" themeColor="textSecondary">
-          {DISCLAIMER}
-        </ThemedText>
+        {/* 금액이 보이는 화면에는 항상 "학습용" 안내를 눈에 띄는 색으로 함께 보여준다 (문구는 constants/notices.ts) */}
+        <PriceDisclaimer />
       </ThemedView>
     </>
   );

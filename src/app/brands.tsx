@@ -9,6 +9,7 @@ import { FlatList, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ListRow } from '@/components/list-row';
+import { StudyNotice } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BRANDS } from '@/constants/brands';
@@ -20,6 +21,8 @@ export default function BrandsScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      {/* 모든 화면 위쪽에 보이는 "학습용" 안내 배너 */}
+      <StudyNotice />
       {/*
         FlatList: 긴 목록을 효율적으로 그리는 도구. 화면에 보이는 항목만 그려서 항목이 많아도 가볍다.
           data                  보여줄 배열

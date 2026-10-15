@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /_sitemap
+
+Sitemap: https://itsolvers-app-001.vercel.app/sitemap.xml
