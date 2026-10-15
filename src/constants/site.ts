@@ -25,6 +25,10 @@ export const FAVICON_URL = '/images/logo.png';
 export const OG_IMAGE_URL = `${SITE_URL}/images/og-image.png`;
 export const OG_IMAGE_ALT = '아이티해결단 로고 및 대표 서비스';
 
+// 구글 서치콘솔 소유권 확인 값. 구글이 "이 사이트의 주인이 맞다"고 확인하는 데 쓰며, 공개되어도 되는 값이다.
+// 서치콘솔에서 확인이 끝난 뒤에도 지우지 않는다. (지우면 소유권 확인이 풀릴 수 있다)
+export const GOOGLE_SITE_VERIFICATION = 'XkM_cxWA2-T6lbfCmju_esNcvG67RDEw7AtEqtjdomo';
+
 // ---- 시작 화면 상단(헤더)과 하단(푸터)에 보이는 회사 정보 ----
 // 아이티해결단 회사 사이트(/Users/dlgurpro/itsolvers/web/html/index.html)의 헤더와 푸터를 따랐다.
 // 푸터 문구는 회사 사이트에 공개된 내용과 같다. 빼고 싶으면 FOOTER_LINES 에서 해당 줄을 지우면 된다.

@@ -13,6 +13,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { WebHead } from '@/components/web-head';
 import {
+  GOOGLE_SITE_VERIFICATION,
   LANDING_DESCRIPTION,
   LANDING_KEYWORDS,
   LANDING_TITLE,
@@ -56,6 +57,7 @@ export default function LandingScreen() {
           og:*                            카카오톡, 페이스북, 네이버 밴드 등으로 링크를 공유할 때의 미리보기
           twitter:*                       트위터(X) 공유 미리보기
           application/ld+json             위에서 정의한 구조화 데이터
+          google-site-verification        구글 서치콘솔에서 이 사이트의 주인임을 확인하는 값
       */}
       <WebHead>
         <title>{LANDING_TITLE}</title>
@@ -64,6 +66,8 @@ export default function LandingScreen() {
         <meta name="author" content={SITE_NAME} />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href={`${SITE_URL}/`} />
+        {/* 구글 서치콘솔 소유권 확인 (구글이 시작 화면(/)에서 이 태그를 찾는다) */}
+        <meta name="google-site-verification" content={GOOGLE_SITE_VERIFICATION} />
 
         <meta property="og:type" content="website" />
         <meta property="og:locale" content="ko_KR" />

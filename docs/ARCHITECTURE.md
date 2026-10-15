@@ -159,6 +159,7 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 - **정적 파일(`public/`)**: `robots.txt`(`/_sitemap` 차단과 사이트맵 주소), `sitemap.xml`(시작 화면만), `images/logo.png`, `images/og-image.png`. 빌드하면 `dist/`로 복사된다.
 - **사이트 정보 한곳 관리**: `src/constants/site.ts`(주소, 제목, 설명, 이미지). **배포 주소(`SITE_URL`)를 바꾸면** `public/robots.txt`와 `public/sitemap.xml`의 주소도 함께 고쳐야 한다.
 - **앱(iOS/Android)에는 영향 없음**: head 지정은 `web-head.tsx`(앱: 아무 일 안 함)와 `web-head.web.tsx`(웹: 실제 지정)로 나눴다.
+- **구글 서치콘솔 소유권 확인**: `google-site-verification` 메타 태그를 시작 화면(`/`)에만 넣었다(값은 `src/constants/site.ts`의 `GOOGLE_SITE_VERIFICATION`). 확인이 끝난 뒤에도 지우지 않는다. 확인과 사이트맵 제출은 배포 후 서치콘솔에서 사용자가 직접 한다(사이트맵 주소: `/sitemap.xml`).
 - **알아 둘 점**: 회사 사이트에 있는 구글 애널리틱스, 애드센스, 검색엔진 소유 확인 태그는 이 앱에 넣지 않았다(승인 없이 외부 분석 서비스를 추가하지 않는 규칙). 검색 노출을 원하면 구글 서치콘솔에 이 주소를 따로 등록해야 한다. 가격과 견적 등 나머지 화면은 검색 제외와 별개로, 내용이 화면을 연 뒤 불러와지는 구조라 검색용 페이지가 아니다.
 
 ## 9. 의도적으로 하지 않는 것
