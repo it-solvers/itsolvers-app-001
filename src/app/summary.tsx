@@ -16,7 +16,7 @@
 
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { AmountInput } from '@/components/amount-input';
 import { BrandLogo } from '@/components/brand-logo';
@@ -144,6 +144,8 @@ function ManualBody() {
             value={priceText}
             onChangeText={setPriceText}
             placeholder="예) 30,000,000"
+            // PC(웹)에서는 화면이 열리면 바로 차량가격 칸에 커서를 둔다. 폰에서는 키보드가 갑자기 올라오지 않도록 쓰지 않는다.
+            autoFocus={Platform.OS === 'web'}
             hint="차량가격을 입력하면 아래 리스료를 계산할 수 있습니다. 입력한 금액은 저장되지 않습니다."
           />
         </Card>
@@ -317,6 +319,19 @@ function LeaseSection({ vehiclePrice, vehicleLines = [] }: { vehiclePrice: numbe
   // 공유 결과 안내 (복사했는지 등). 계산 입력이 바뀌면 지운다.
   const [shareNotice, setShareNotice] = useState('');
 
+  // 입력 한도: 차량가격 > 선수금 + 보증금, 차량가격 > 잔존가치. 한도를 넘는 값은 입력할 수 없고 한도로 맞춰진다.
+  // 선수금의 한도는 보증금에 따라, 보증금의 한도는 선수금에 따라 달라진다. 차량가격이 아직 없으면 한도를 두지 않는다.
+  // (아래 deposit, prepaid 값은 이 줄 다음에 계산되므로, 한도는 입력한 글자에서 바로 구한다)
+  const hasPrice = vehiclePrice > 0;
+  const depositNow = parseNumberText(depositText);
+  const prepaidNow = parseNumberText(prepaidText);
+  const maxPrepaid = hasPrice ? Math.max(0, vehiclePrice - 1 - depositNow) : undefined;
+  const maxDeposit = hasPrice ? Math.max(0, vehiclePrice - 1 - prepaidNow) : undefined;
+  const maxResidual = hasPrice ? vehiclePrice - 1 : undefined;
+  /** 입력 글자가 한도를 넘으면 한도로 맞춘 글자를 돌려준다. */
+  const clampText = (digits: string, max: number | undefined) =>
+    max === undefined || digits === '' || Number(digits) <= max ? digits : String(max);
+
   // 입력한 금액 글자 → 숫자. 비어 있으면 0원이다.
   const prepaid = parseNumberText(prepaidText);
   const deposit = parseNumberText(depositText);
@@ -376,6 +391,8 @@ function LeaseSection({ vehiclePrice, vehicleLines = [] }: { vehiclePrice: numbe
                 <Pressable
                   key={term}
                   accessibilityRole="radio"
+                  // PC 에서 Tab 키는 입력 칸들만 차례로 이동하도록, 기간 버튼은 Tab 순서에서 뺀다(마우스와 터치로 선택)
+                  tabIndex={-1}
                   accessibilityLabel={`기간 ${term}개월`}
                   accessibilityState={{ selected: isSelected }}
                   onPress={() => setTermMonths(term)}
@@ -400,21 +417,27 @@ function LeaseSection({ vehiclePrice, vehicleLines = [] }: { vehiclePrice: numbe
           label="선수금"
           vehiclePrice={vehiclePrice}
           amountText={prepaidText}
-          onChangeAmount={setPrepaidEdit}
+          maxAmount={maxPrepaid}
+          limitText="선수금과 보증금의 합은 차량가격보다 작아야 합니다."
+          onChangeAmount={(digits) => setPrepaidEdit(clampText(digits, maxPrepaid))}
           hint="처음에 내는 돈(장기선수금). 기간 동안 나눠서 월 납입금에서 뺍니다."
         />
         <AmountPercentField
           label="보증금"
           vehiclePrice={vehiclePrice}
           amountText={depositText}
-          onChangeAmount={setDepositEdit}
+          maxAmount={maxDeposit}
+          limitText="선수금과 보증금의 합은 차량가격보다 작아야 합니다."
+          onChangeAmount={(digits) => setDepositEdit(clampText(digits, maxDeposit))}
           hint="만기에 돌려받는 돈. 맡긴 돈의 월 이자만큼 월 납입금이 줄어듭니다."
         />
         <AmountPercentField
           label="잔존가치"
           vehiclePrice={vehiclePrice}
           amountText={residualText}
-          onChangeAmount={setResidualEdit}
+          maxAmount={maxResidual}
+          limitText="잔존가치는 차량가격보다 작아야 합니다."
+          onChangeAmount={(digits) => setResidualEdit(clampText(digits, maxResidual))}
           hint="만기 때 차량의 가치. 클수록 월 납입금이 줄어듭니다."
         />
 

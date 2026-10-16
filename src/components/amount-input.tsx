@@ -24,10 +24,11 @@ type AmountInputProps = {
   onChangeText: (cleaned: string) => void; // 정리된 글자를 부모에게 돌려준다
   placeholder?: string;
   hint?: string; // 칸 아래의 작은 설명
+  autoFocus?: boolean; // 화면이 열릴 때 바로 커서를 둔다
   showLabel?: boolean; // false 면 제목 글자를 보이지 않는다(부모가 더 큰 제목을 따로 보여줄 때). 화면 낭독용 이름은 그대로 남는다
 };
 
-export function AmountInput({ label, unit, kind, value, onChangeText, placeholder, hint, showLabel = true }: AmountInputProps) {
+export function AmountInput({ label, unit, kind, value, onChangeText, placeholder, hint, showLabel = true, autoFocus }: AmountInputProps) {
   const theme = useTheme();
   // 입력 중인지. 입력 중이면 칸 테두리를 파랗게 해서 "여기에 입력 중"임을 보여준다. (기기 기본 포커스 표시를 대신한다)
   const [focused, setFocused] = useState(false);
@@ -55,6 +56,7 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
           // 화면 낭독 기능이 칸의 이름을 읽을 수 있게 한다
           accessibilityLabel={`${label} (${unit})`}
           value={shown}
+          autoFocus={autoFocus}
           // 사용자가 글자를 바꿀 때마다 숫자 외의 글자를 걸러서 부모에게 알린다
           onChangeText={(text) => {
             setSelectAll(false); // 입력이 시작되면 전체 선택 지정을 푼다

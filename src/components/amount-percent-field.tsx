@@ -17,6 +17,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { percentAmount } from '@/utils/lease';
+import { formatPrice } from '@/utils/price';
 
 type AmountPercentFieldProps = {
   label: string; // 항목 이름 (예: "선수금")
@@ -24,6 +25,8 @@ type AmountPercentFieldProps = {
   amountText: string; // 입력된 금액 글자. 숫자만("10000000"), 비어 있으면 "" (= 0원)
   onChangeAmount: (digits: string) => void;
   hint?: string; // 칸 아래의 작은 설명
+  maxAmount?: number; // 입력할 수 있는 최대 금액(원). 없으면 한도 없음
+  limitText?: string; // 한도에 닿았을 때 보여줄 안내
 };
 
 /** 입력한 금액이 차량가격의 몇 %인지 (원 단위 입력이라 소수가 나올 수 있다) */
@@ -38,11 +41,13 @@ function formatPercent(percent: number): string {
   return `${Math.round(percent * 10) / 10}%`;
 }
 
-export function AmountPercentField({ label, vehiclePrice, amountText, onChangeAmount, hint }: AmountPercentFieldProps) {
+export function AmountPercentField({ label, vehiclePrice, amountText, onChangeAmount, hint, maxAmount, limitText }: AmountPercentFieldProps) {
   const theme = useTheme();
   const amount = amountText === '' ? 0 : Number(amountText);
   const percent = toPercent(amount, vehiclePrice);
   const hasPrice = vehiclePrice > 0;
+  // 입력한 금액이 한도에 닿았는지. 닿으면 "더 입력할 수 없다"는 안내를 보여준다.
+  const atLimit = maxAmount !== undefined && maxAmount > 0 && amount >= maxAmount;
 
   // 슬라이더로 고른 비율 → 차량가격의 그 비율만큼의 금액을 칸에 넣는다. (0원이면 칸을 비운다)
   const onSlide = (next: number) => {
@@ -67,6 +72,11 @@ export function AmountPercentField({ label, vehiclePrice, amountText, onChangeAm
         placeholder="0"
         hint={hint}
       />
+      {atLimit ? (
+        <ThemedText type="small" style={styles.limitText} accessibilityRole="alert">
+          {`${limitText ?? ''} 최대 ${formatPrice(maxAmount ?? 0)}까지 입력할 수 있습니다.`.trim()}
+        </ThemedText>
+      ) : null}
       {/* 도구: 비율 슬라이더. 손잡이는 입력한 금액에서 거꾸로 계산한 비율에 놓인다 */}
       <View style={styles.sliderHead}>
         <ThemedText type="small" themeColor="textSecondary">
@@ -87,5 +97,6 @@ export function AmountPercentField({ label, vehiclePrice, amountText, onChangeAm
 const styles = StyleSheet.create({
   wrapper: { gap: Spacing.two, padding: Spacing.three, borderWidth: 1, borderRadius: Spacing.three },
   title: { fontSize: 22, lineHeight: 30 },
+  limitText: { color: '#2563eb' },
   sliderHead: { marginTop: Spacing.one },
 });

@@ -79,6 +79,8 @@ export function PercentSlider({ label, percent, onChange, disabled = false, perc
 
       <View
         style={styles.touch}
+        // PC 에서 Tab 키는 금액 입력 칸들만 차례로 이동하도록, 슬라이더는 Tab 순서에서 뺀다(마우스와 터치로 조작)
+        tabIndex={-1}
         accessible
         accessibilityRole="adjustable"
         accessibilityLabel={`${label} 비율`}
