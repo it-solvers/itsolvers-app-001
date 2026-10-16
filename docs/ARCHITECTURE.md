@@ -38,7 +38,7 @@
 
 ```
 src/app/         화면과 라우팅 (파일 이름 = 주소). 로고 헤더는 시작·제조사 화면만 쓰고, 제조사 이후 화면은 앱 기본 제목줄을 쓴다. +html.tsx(웹 HTML 틀), _layout.tsx(스택), index.tsx(시작/랜딩), brands.tsx(제조사), cars.tsx(차종), trims.tsx(트림), price.tsx(가격), summary.tsx(차량 선택 완료)
-src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), section(제목이 붙은 구역), load-status(로딩/오류), data-notice(데이터 기준일), study-notice("학습용" 안내 배너와 하단 문구), web-head(웹 head 지정), site-header/screen-top(시작·제조사 화면의 헤더 틀. site-footer는 미사용), car-card(차량 카드), brand-logo(제조사 엠블럼), coin-logo("차량가격 직접 입력" 줄의 금빛 동전 로고), percent-slider(선납금·보증금·잔존가치 비율 슬라이더), color-dot(색상 동그라미), remote-image(인터넷 이미지), amount-input(숫자 입력 칸), 스플래시용 animated-icon
+src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), section(제목이 붙은 구역), load-status(로딩/오류), data-notice(데이터 기준일), study-notice("학습용" 안내 배너와 하단 문구), web-head(웹 head 지정), site-header/screen-top(시작·제조사 화면의 헤더 틀. site-footer는 미사용), car-card(차량 카드), brand-logo(제조사 엠블럼), header-logo(제목줄 오른쪽의 작은 회사 로고), coin-logo("차량가격 직접 입력" 줄의 금빛 동전 로고), percent-slider(선납금·보증금·잔존가치 비율 슬라이더), color-dot(색상 동그라미), remote-image(인터넷 이미지), amount-input(숫자 입력 칸), 스플래시용 animated-icon
 src/constants/   템플릿 테마 값, brands.ts(지원 제조사 목록), site.ts(웹 검색/공유 정보), notices.ts(학습용 안내 문구)
 src/hooks/       use-load(화면 데이터 불러오기), use-option-selection(사양·옵션·색상 선택과 선택 규칙), 템플릿 훅(색상 테마 등)
 src/utils/       price.ts(가격 표시, 선택한 항목 목록, 합계 계산), options.ts(옵션 선택 목록 변경 규칙), trim.ts(트림 구매 용도), lease.ts(리스료 계산과 입력 글자 정리), images.ts(제조사 이미지 주소)

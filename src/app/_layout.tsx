@@ -22,6 +22,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { HeaderLogo } from '@/components/header-logo';
 import { WebHead } from '@/components/web-head';
 import {
   DEFAULT_TITLE,
@@ -78,7 +79,8 @@ export default function RootLayout() {
         (뒤로 가기 + 제목)을 쓴다. 제목은 각 화면 파일의 <Stack.Screen options> 에서 정하고, 여기의 title 은
         웹 브라우저 탭 제목의 기본값이다.
       */}
-      <Stack>
+      {/* screenOptions: 모든 화면 공통 옵션. headerRight = 제목줄 오른쪽 끝의 작은 회사 로고 (헤더를 끈 화면에는 보이지 않음) */}
+      <Stack screenOptions={{ headerRight: () => <HeaderLogo /> }}>
         <Stack.Screen name="index" options={{ headerShown: false, title: LANDING_TITLE }} />
         <Stack.Screen name="brands" options={{ headerShown: false, title: '제조사 선택' }} />
         <Stack.Screen name="cars" options={{ title: '차종 선택', headerBackTitle: '제조사' }} />
