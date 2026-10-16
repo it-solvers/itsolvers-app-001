@@ -3,6 +3,7 @@
 //   - 눈금(점) 19개에 딱딱 맞춰 움직인다. 막대를 눌러도 가장 가까운 눈금으로 바로 간다.
 //   - 확대 효과: 손잡이에 가까운 눈금 점일수록 크게 보이고(돋보기처럼), 손잡이 위에는 지금 비율이 큰 글자로 떠 있다.
 //     끌고 있는 동안에는 손잡이와 글자가 더 커진다.
+//   - 막대 아래에는 눈금 숫자를 두지 않는다. 지금 비율은 손잡이 위의 큰 글자로 충분히 보이기 때문이다.
 //   - 금액을 직접 입력해서 5% 단위가 아닌 비율(예: 32.5%)이 되면, 손잡이는 그 위치에 그대로 놓이고 글자도 32.5%로 보인다.
 //   - 화면 낭독 기능(보이스오버/톡백)에서는 위아래로 쓸어서 5%씩 조절할 수 있다.
 // 새 패키지 없이 React Native 기본 터치 이벤트(onResponder...: 손가락이 닿고 움직일 때 알려 주는 것)로 만들었다.
@@ -25,7 +26,6 @@ const TRACK_HEIGHT = 6;
 const TOUCH_HEIGHT = 44; // 누르기 쉬운 터치 영역 높이
 const BUBBLE_WIDTH = 72; // 비율 글자 알약의 폭
 const BUBBLE_AREA = 40; // 손잡이 위에 뜨는 비율 글자 자리
-const LABELS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]; // 막대 아래에 항상 보이는 눈금 글자
 const MAGNIFY_RANGE = 2.5; // 손잡이에서 눈금 몇 칸 안까지 점이 커지는지
 
 type PercentSliderProps = {
@@ -125,18 +125,6 @@ export function PercentSlider({ label, percent, onChange, disabled = false, perc
         />
       </View>
 
-      {/* 막대 아래 눈금 글자 (10% 단위. 5% 단위 값은 손잡이 위 글자로 보인다) */}
-      <View style={styles.labels} pointerEvents="none">
-        {LABELS.map((value) => (
-          <ThemedText
-            key={value}
-            type="small"
-            themeColor="textSecondary"
-            style={[styles.labelText, { left: xOf(value / STEP) - 12 }]}>
-            {value}
-          </ThemedText>
-        ))}
-      </View>
     </View>
   );
 }
@@ -168,6 +156,4 @@ const styles = StyleSheet.create({
     borderColor: BLUE,
     top: (TOUCH_HEIGHT - THUMB) / 2,
   },
-  labels: { height: 20 },
-  labelText: { position: 'absolute', width: 24, textAlign: 'center', fontSize: 12, lineHeight: 16 },
 });
