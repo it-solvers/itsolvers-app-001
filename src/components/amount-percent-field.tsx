@@ -33,6 +33,8 @@ function toPercent(amount: number, price: number): number {
 
 /** 화면에 보일 비율 글자. 소수 첫째 자리까지, 뒤의 .0은 뺀다. 34.77 → "34.8%", 15 → "15%" */
 function formatPercent(percent: number): string {
+  // 차량가격을 훨씬 넘는 금액을 넣은 경우 글자가 알약 밖으로 넘치지 않게 "100%+"로 줄여 보인다 (계산 검증이 오류 문구로 알려 준다)
+  if (percent > 100) return '100%+';
   return `${Math.round(percent * 10) / 10}%`;
 }
 

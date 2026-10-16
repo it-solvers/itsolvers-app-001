@@ -36,6 +36,9 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
   const fieldRef = useRef<View>(null);
   // 안의 글자가 전부 선택된 상태인지. 선택되면 파란 배경이 깔리므로 글자색을 흰색으로 바꿔 읽을 수 있게 한다.
   const [allSelected, setAllSelected] = useState(false);
+  // 칸을 누른 직후에만 true. 이 동안은 "전체 선택"을 우리가 직접 지정하고, 첫 글자를 입력하는 순간 풀어서 이후 입력에는 간섭하지 않는다.
+  // (기기의 selectTextOnFocus 는 입력 도중에 다시 전체 선택을 걸어 "3.5" 입력 때 앞 숫자가 지워지는 문제가 있었다)
+  const [selectAll, setSelectAll] = useState(false);
   // 금액은 쉼표를 붙여 보여주고, 금리는 그대로 보여준다.
   const shown = kind === 'amount' ? formatWithCommas(value) : value;
 
@@ -53,33 +56,36 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
           accessibilityLabel={`${label} (${unit})`}
           value={shown}
           // 사용자가 글자를 바꿀 때마다 숫자 외의 글자를 걸러서 부모에게 알린다
-          onChangeText={(text) => onChangeText(kind === 'amount' ? cleanAmountText(text) : cleanRateText(text))}
+          onChangeText={(text) => {
+            setSelectAll(false); // 입력이 시작되면 전체 선택 지정을 푼다
+            onChangeText(kind === 'amount' ? cleanAmountText(text) : cleanRateText(text));
+          }}
+          selection={selectAll ? { start: 0, end: shown.length } : undefined}
           // 숫자 키패드를 띄운다. 금리는 소수점이 필요해서 decimal-pad
           keyboardType={kind === 'amount' ? 'number-pad' : 'decimal-pad'}
           placeholder={placeholder}
           placeholderTextColor={theme.textSecondary}
           onFocus={() => {
             setFocused(true);
+            setSelectAll(true); // 누르면 안의 숫자를 모두 선택한다. 그대로 새 숫자를 치면 기존 값이 지워지고 바뀐다.
             // 키보드가 아직 올라오는 중일 수 있어서 잠깐 뒤에 위치를 맞춘다 (키보드가 다 올라온 뒤에도 한 번 더 맞춘다)
             setTimeout(() => ensureVisible(fieldRef.current), 100);
           }}
           onBlur={() => {
             setFocused(false);
+            setSelectAll(false);
             setAllSelected(false);
           }}
           // 선택 범위가 바뀔 때마다 "처음부터 끝까지 전부 선택"인지 확인한다. (칸을 누르면 전체 선택, 한 글자 입력하면 해제)
           onSelectionChange={(event) => {
             const { start, end } = event.nativeEvent.selection;
-            setAllSelected(kind === 'amount' && shown.length > 0 && start === 0 && end === shown.length);
+            setAllSelected(shown.length > 0 && start === 0 && end === shown.length);
           }}
           // 입력 칸을 눌렀을 때 기기가 기본으로 그리는 어두운 네모(포커스 배경, 밑줄, 자동 채우기 표시)를 없앤다.
           underlineColorAndroid="transparent"
           importantForAutofill="no"
           autoComplete="off"
           autoCorrect={false}
-          // 금액 칸은 누르면 안의 숫자를 모두 선택한다. 그대로 새 숫자를 치면 기존 값이 지워지고 바뀐다.
-          // 금리 칸은 소수점(3.5)을 입력하는 도중에 다시 선택되어 앞 숫자가 지워지는 문제가 있어 전체 선택을 하지 않는다.
-          selectTextOnFocus={kind === 'amount'}
           selectionColor={FOCUS_COLOR}
           cursorColor={FOCUS_COLOR}
           style={[styles.input, { color: allSelected ? '#ffffff' : theme.text }]}
