@@ -23,7 +23,7 @@ import { BrandLogo } from '@/components/brand-logo';
 import { ColorDot } from '@/components/color-dot';
 import { DataNotice } from '@/components/data-notice';
 import { LoadStatus } from '@/components/load-status';
-import { PercentStepper } from '@/components/percent-stepper';
+import { AmountPercentField } from '@/components/amount-percent-field';
 import { RemoteImage } from '@/components/remote-image';
 import { Section } from '@/components/section';
 import { PriceDisclaimer, StudyNotice } from '@/components/study-notice';
@@ -39,10 +39,8 @@ import { getTrimPrice } from '@/storage/vehicleData';
 import type { TrimPrice } from '@/types/car';
 import {
   calcLeasePayment,
-  LEASE_PERCENTS,
   LEASE_TERMS,
   parseNumberText,
-  percentAmount,
 } from '@/utils/lease';
 import { carImageUrl, colorChipUrl } from '@/utils/images';
 import { calcBreakdown, formatExtra, formatPrice, selectedItems, type Selection } from '@/utils/price';
@@ -284,18 +282,19 @@ function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
   const theme = useTheme();
   // 오류 글자색: 어두운 배경에서도 잘 보이도록 다크 모드에서는 밝은 빨강을 쓴다.
   const errorColor = useColorScheme() === 'dark' ? '#ff8a80' : '#c0392b';
-  // 입력 값들. 선수금, 보증금, 잔존가치는 버튼으로 고른 "비율(%)"만 들고 있고, 금액은 비율로 계산한다.
+  // 입력 값들. 선수금, 보증금, 잔존가치는 "금액"이 주인이다. 숫자만 든 글자("10000000")로 보관하고,
+  // 비율 버튼을 누르면 차량가격의 비율만큼의 금액이 이 글자에 들어간다. (비율은 금액에서 거꾸로 계산해 보여준다)
   // 금리는 "5.25"처럼 글자로 보관한다. (입력 중인 "5." 같은 중간 상태를 그대로 보여줄 수 있어야 하기 때문이다)
   const [termMonths, setTermMonths] = useState<number>(36); // 처음에는 36개월을 선택해 둔다
-  const [prepaidPercent, setPrepaidPercent] = useState(0);
-  const [depositPercent, setDepositPercent] = useState(0);
-  const [residualPercent, setResidualPercent] = useState(0);
+  const [prepaidText, setPrepaidText] = useState('');
+  const [depositText, setDepositText] = useState('');
+  const [residualText, setResidualText] = useState('');
   const [rateText, setRateText] = useState('');
 
-  // 비율 → 금액(차량가격 기준, 원 단위 반올림). 버튼 가운데에 보여주고 계산에도 쓴다.
-  const prepaid = percentAmount(vehiclePrice, prepaidPercent);
-  const deposit = percentAmount(vehiclePrice, depositPercent);
-  const residual = percentAmount(vehiclePrice, residualPercent);
+  // 입력한 금액 글자 → 숫자. 비어 있으면 0원이다.
+  const prepaid = parseNumberText(prepaidText);
+  const deposit = parseNumberText(depositText);
+  const residual = parseNumberText(residualText);
 
   // 금리를 비우면 계산하지 않고 안내만 보여준다. 차량가격이 없을 때도 마찬가지다.
   const rateEmpty = rateText === '' || rateText === '.';
@@ -347,21 +346,28 @@ function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
           </View>
         </View>
 
-        {/* 선수금, 보증금, 잔존가치: 제목 바로 아래의 [−][+] 버튼으로 비율을 고른다. 금액은 입력할 수 없고 계산된 값만 보인다. */}
-        <PercentStepper label="선수금" percents={LEASE_PERCENTS} value={prepaidPercent} onChange={setPrepaidPercent} amount={prepaid} />
-        <ThemedText type="small" themeColor="textSecondary">
-          처음에 내는 돈(장기선수금). 기간 동안 나눠서 월 납입금에서 뺍니다.
-        </ThemedText>
-
-        <PercentStepper label="보증금" percents={LEASE_PERCENTS} value={depositPercent} onChange={setDepositPercent} amount={deposit} />
-        <ThemedText type="small" themeColor="textSecondary">
-          만기에 돌려받는 돈. 맡긴 돈의 월 이자만큼 월 납입금이 줄어듭니다.
-        </ThemedText>
-
-        <PercentStepper label="잔존가치" percents={LEASE_PERCENTS} value={residualPercent} onChange={setResidualPercent} amount={residual} />
-        <ThemedText type="small" themeColor="textSecondary">
-          만기 때 차량의 가치. 클수록 월 납입금이 줄어듭니다.
-        </ThemedText>
+        {/* 선수금, 보증금, 잔존가치: 금액을 직접 입력한다. 아래 [−][+] 버튼으로 차량가격의 5% 단위 금액을 빠르게 넣을 수도 있다. */}
+        <AmountPercentField
+          label="선수금"
+          vehiclePrice={vehiclePrice}
+          amountText={prepaidText}
+          onChangeAmount={setPrepaidText}
+          hint="처음에 내는 돈(장기선수금). 기간 동안 나눠서 월 납입금에서 뺍니다."
+        />
+        <AmountPercentField
+          label="보증금"
+          vehiclePrice={vehiclePrice}
+          amountText={depositText}
+          onChangeAmount={setDepositText}
+          hint="만기에 돌려받는 돈. 맡긴 돈의 월 이자만큼 월 납입금이 줄어듭니다."
+        />
+        <AmountPercentField
+          label="잔존가치"
+          vehiclePrice={vehiclePrice}
+          amountText={residualText}
+          onChangeAmount={setResidualText}
+          hint="만기 때 차량의 가치. 클수록 월 납입금이 줄어듭니다."
+        />
 
         {/* 금리는 직접 입력한다 */}
         <AmountInput

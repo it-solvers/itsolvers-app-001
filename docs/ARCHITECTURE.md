@@ -38,7 +38,7 @@
 
 ```
 src/app/         화면과 라우팅 (파일 이름 = 주소). 로고 헤더는 시작·제조사 화면만 쓰고, 제조사 이후 화면은 앱 기본 제목줄을 쓴다. +html.tsx(웹 HTML 틀), _layout.tsx(스택), index.tsx(시작/랜딩), brands.tsx(제조사), cars.tsx(차종), trims.tsx(트림), price.tsx(가격), summary.tsx(차량 선택 완료)
-src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), section(제목이 붙은 구역), load-status(로딩/오류), data-notice(데이터 기준일), study-notice("학습용" 안내 배너와 하단 문구), web-head(웹 head 지정), site-header/screen-top(시작·제조사 화면의 헤더 틀. site-footer는 미사용), car-card(차량 카드), brand-logo(제조사 엠블럼), header-logo(제목줄 오른쪽의 작은 회사 로고), coin-logo("차량가격 직접 입력" 줄의 금빛 동전 로고), percent-stepper(선수금·보증금·잔존가치 비율 [−][+] 버튼. percent-slider는 미사용), color-dot(색상 동그라미), remote-image(인터넷 이미지), amount-input(숫자 입력 칸), 스플래시용 animated-icon
+src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), section(제목이 붙은 구역), load-status(로딩/오류), data-notice(데이터 기준일), study-notice("학습용" 안내 배너와 하단 문구), web-head(웹 head 지정), site-header/screen-top(시작·제조사 화면의 헤더 틀. site-footer는 미사용), car-card(차량 카드), brand-logo(제조사 엠블럼), header-logo(제목줄 오른쪽의 작은 회사 로고), coin-logo("차량가격 직접 입력" 줄의 금빛 동전 로고), amount-percent-field(선수금·보증금·잔존가치: 금액 입력 칸 + 비율 [−][+] 버튼. percent-slider는 미사용), color-dot(색상 동그라미), remote-image(인터넷 이미지), amount-input(숫자 입력 칸), 스플래시용 animated-icon
 src/constants/   템플릿 테마 값, brands.ts(지원 제조사 목록), site.ts(웹 검색/공유 정보), notices.ts(학습용 안내 문구)
 src/hooks/       use-load(화면 데이터 불러오기), use-option-selection(사양·옵션·색상 선택과 선택 규칙), 템플릿 훅(색상 테마 등)
 src/utils/       price.ts(가격 표시, 선택한 항목 목록, 합계 계산), options.ts(옵션 선택 목록 변경 규칙), trim.ts(트림 구매 용도), lease.ts(리스료 계산과 입력 글자 정리), images.ts(제조사 이미지 주소)
@@ -243,3 +243,4 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 
 - **공유 미리보기 기본값**: 링크 공유 시 설명과 회사 로고(og-image)가 나오도록 og/twitter 태그를 `_layout.tsx`의 기본 head에도 넣었다. 시작 화면 외의 화면 주소를 공유해도 미리보기가 나오며, 검색에는 계속 노출하지 않는다(noindex).
 - **비율 선택을 슬라이더에서 스테퍼로 변경 (2026-10-16)**: 비율 범위가 0~30%(7칸)에서 0~90%(19칸, 5% 단위)로 늘어 슬라이더로는 정확히 맞추기 어려워 [−][값][+] 버튼(길게 누르면 반복)으로 바꿨다. 용어도 선납금 → 선수금으로 통일. 선수금+보증금이 차량가격을 넘거나 월 납입금이 0원 이하가 되는 조합은 기존 검증이 오류 문구로 막는다. 대안으로 검토한 것: 드롭다운(19개 목록이 길다), 숫자 휠(웹 지원이 불편).
+- **선수금·보증금·잔존가치는 금액이 주인 (2026-10-16)**: 고객이 금액으로 말하는 경우가 많아 금액 입력 칸을 주로 두고, 비율 버튼은 금액을 빠르게 넣는 도구로 바꿨다(`amount-percent-field.tsx`). 상태는 금액 글자만 들고, 비율은 "금액 ÷ 차량가격"으로 거꾸로 계산해 보여준다. 차량가격이 바뀌어도 금액은 유지한다. 5% 단위가 아닌 금액에서 버튼은 바로 위/아래 5% 단위로 간다.

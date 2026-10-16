@@ -26,9 +26,6 @@
 export const LEASE_TERMS = [12, 24, 36, 48, 60] as const;
 export type LeaseTerm = (typeof LEASE_TERMS)[number];
 
-/** 선수금, 보증금, 잔존가치에서 고를 수 있는 비율(%): 0, 5, 10 ... 90. 0%는 "선택 안 함"이다. 차량가격에 곱해서 금액을 정한다. */
-export const LEASE_PERCENTS: readonly number[] = Array.from({ length: 19 }, (_, i) => i * 5);
-
 /** 차량가격의 percent% 금액(원 단위 반올림). 예: percentAmount(28_760_000, 10) → 2876000 */
 export function percentAmount(vehiclePrice: number, percent: number): number {
   return Math.round((vehiclePrice * percent) / 100);
