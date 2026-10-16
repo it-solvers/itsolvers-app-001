@@ -40,6 +40,7 @@ import type { TrimPrice } from '@/types/car';
 import {
   calcLeasePayment,
   LEASE_TERMS,
+  percentAmount,
   parseNumberText,
 } from '@/utils/lease';
 import { carImageUrl, colorChipUrl } from '@/utils/images';
@@ -285,6 +286,9 @@ function SummaryBody({
   );
 }
 
+// 선수금, 보증금, 잔존가치의 처음 값(차량가격 대비 %)
+const DEFAULT_PERCENT = 30;
+
 // ---------------------------------------------------------------------------
 // 리스료 계산 구역. 입력(기간, 선수금, 보증금, 잔존가치, 금리)과 결과(월 납입금액)를 보여준다.
 // 계산식은 src/utils/lease.ts 와 docs/APP_SPEC.md 5장에 있다.
@@ -299,9 +303,15 @@ function LeaseSection({ vehiclePrice, vehicleLines = [] }: { vehiclePrice: numbe
   // 비율 버튼을 누르면 차량가격의 비율만큼의 금액이 이 글자에 들어간다. (비율은 금액에서 거꾸로 계산해 보여준다)
   // 금리는 "5.25"처럼 글자로 보관한다. (입력 중인 "5." 같은 중간 상태를 그대로 보여줄 수 있어야 하기 때문이다)
   const [termMonths, setTermMonths] = useState<number>(36); // 처음에는 36개월을 선택해 둔다
-  const [prepaidText, setPrepaidText] = useState('');
-  const [depositText, setDepositText] = useState('');
-  const [residualText, setResidualText] = useState('');
+  // null = 아직 손대지 않음 → 기본값(차량가격의 30%)을 보여준다. 차량가격이 바뀌면 기본값도 따라 바뀐다.
+  // 사용자가 금액을 고치거나 슬라이더를 움직이면 그 값(글자, 비우면 "")을 들고 있고, 이후에는 차량가격이 바뀌어도 유지한다.
+  const [prepaidEdit, setPrepaidEdit] = useState<string | null>(null);
+  const [depositEdit, setDepositEdit] = useState<string | null>(null);
+  const [residualEdit, setResidualEdit] = useState<string | null>(null);
+  const defaultText = vehiclePrice > 0 ? String(percentAmount(vehiclePrice, DEFAULT_PERCENT)) : '';
+  const prepaidText = prepaidEdit ?? defaultText;
+  const depositText = depositEdit ?? defaultText;
+  const residualText = residualEdit ?? defaultText;
   const [rateText, setRateText] = useState('');
   // 공유 결과 안내 (복사했는지 등). 계산 입력이 바뀌면 지운다.
   const [shareNotice, setShareNotice] = useState('');
@@ -389,21 +399,21 @@ function LeaseSection({ vehiclePrice, vehicleLines = [] }: { vehiclePrice: numbe
           label="선수금"
           vehiclePrice={vehiclePrice}
           amountText={prepaidText}
-          onChangeAmount={setPrepaidText}
+          onChangeAmount={setPrepaidEdit}
           hint="처음에 내는 돈(장기선수금). 기간 동안 나눠서 월 납입금에서 뺍니다."
         />
         <AmountPercentField
           label="보증금"
           vehiclePrice={vehiclePrice}
           amountText={depositText}
-          onChangeAmount={setDepositText}
+          onChangeAmount={setDepositEdit}
           hint="만기에 돌려받는 돈. 맡긴 돈의 월 이자만큼 월 납입금이 줄어듭니다."
         />
         <AmountPercentField
           label="잔존가치"
           vehiclePrice={vehiclePrice}
           amountText={residualText}
-          onChangeAmount={setResidualText}
+          onChangeAmount={setResidualEdit}
           hint="만기 때 차량의 가치. 클수록 월 납입금이 줄어듭니다."
         />
 

@@ -6,7 +6,8 @@
 // (이렇게 값을 부모가 들고 있는 입력 칸을 "제어되는 입력"이라고 부른다)
 // ============================================================================
 
-import { StyleSheet, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, TextInput, View, type TextStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -26,13 +27,19 @@ type AmountInputProps = {
 
 export function AmountInput({ label, unit, kind, value, onChangeText, placeholder, hint, showLabel = true }: AmountInputProps) {
   const theme = useTheme();
+  // 입력 중인지. 입력 중이면 칸 테두리를 파랗게 해서 "여기에 입력 중"임을 보여준다. (기기 기본 포커스 표시를 대신한다)
+  const [focused, setFocused] = useState(false);
   // 금액은 쉼표를 붙여 보여주고, 금리는 그대로 보여준다.
   const shown = kind === 'amount' ? formatWithCommas(value) : value;
 
   return (
     <View style={styles.wrapper}>
       {showLabel ? <ThemedText type="smallBold">{label}</ThemedText> : null}
-      <View style={[styles.field, { backgroundColor: theme.background, borderColor: theme.backgroundSelected }]}>
+      <View
+        style={[
+          styles.field,
+          { backgroundColor: theme.background, borderColor: focused ? FOCUS_COLOR : theme.backgroundSelected },
+        ]}>
         <TextInput
           // 화면 낭독 기능이 칸의 이름을 읽을 수 있게 한다
           accessibilityLabel={`${label} (${unit})`}
@@ -43,9 +50,20 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
           keyboardType={kind === 'amount' ? 'number-pad' : 'decimal-pad'}
           placeholder={placeholder}
           placeholderTextColor={theme.textSecondary}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          // 입력 칸을 눌렀을 때 기기가 기본으로 그리는 어두운 네모(포커스 배경, 밑줄, 자동 채우기 표시)를 없앤다.
+          underlineColorAndroid="transparent"
+          importantForAutofill="no"
+          autoComplete="off"
+          autoCorrect={false}
+          selectionColor={FOCUS_COLOR}
+          cursorColor={FOCUS_COLOR}
           style={[styles.input, { color: theme.text }]}
         />
-        <ThemedText themeColor="textSecondary">{unit}</ThemedText>
+        <ThemedText themeColor="textSecondary" style={styles.unit}>
+          {unit}
+        </ThemedText>
       </View>
       {hint ? (
         <ThemedText type="small" themeColor="textSecondary">
@@ -55,6 +73,11 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
     </View>
   );
 }
+
+const FOCUS_COLOR = '#2563eb';
+
+// 웹 브라우저가 입력 칸에 기본으로 그리는 포커스 테두리(outline)를 없앤다. (대신 위의 파란 테두리를 쓴다) 앱에서는 무시된다.
+const noOutline = { outlineStyle: 'none' } as unknown as TextStyle;
 
 const styles = StyleSheet.create({
   wrapper: { gap: Spacing.one },
@@ -67,5 +90,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: Spacing.three,
   },
-  input: { flex: 1, fontSize: 18, paddingVertical: Spacing.two, textAlign: 'right' },
+  // minWidth: 0 → 글자가 길거나 글자 크기를 키워도 입력 칸이 카드 밖으로 밀려나지 않고 칸 안에서 줄어든다.
+  // backgroundColor: 'transparent' → 포커스 때 기기가 깔아 주는 기본 배경(어두운 네모)이 보이지 않게 한다.
+  input: { flex: 1, minWidth: 0, fontSize: 18, paddingVertical: Spacing.two, textAlign: 'right', backgroundColor: 'transparent', ...noOutline },
+  unit: { flexShrink: 0 },
 });

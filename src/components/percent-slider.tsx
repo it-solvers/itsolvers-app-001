@@ -65,7 +65,7 @@ export function PercentSlider({ label, percent, onChange, disabled = false, perc
     // 가로 한 줄: [0] [막대(+ 위에 뜨는 글자)] [90]. 양 끝 숫자는 막대 옆에 붙여서 따로 한 줄을 차지하지 않는다.
     <View style={[styles.row, disabled && { opacity: 0.4 }]}>
       <View style={styles.endLabel} pointerEvents="none">
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="small" themeColor="textSecondary" allowFontScaling={false}>
           0
         </ThemedText>
       </View>
@@ -73,7 +73,7 @@ export function PercentSlider({ label, percent, onChange, disabled = false, perc
       {/* 손잡이 위에 떠 있는 비율 글자 (확대 효과). 손잡이를 따라 움직인다 */}
       <View style={styles.bubbleArea} pointerEvents="none">
         <View style={[styles.bubble, { left: bubbleLeft, transform: [{ scale: dragging ? 1.25 : 1 }] }]}>
-          <ThemedText style={styles.bubbleText}>{percentText}</ThemedText>
+          <ThemedText style={styles.bubbleText} allowFontScaling={false} numberOfLines={1}>{percentText}</ThemedText>
         </View>
       </View>
 
@@ -134,7 +134,7 @@ export function PercentSlider({ label, percent, onChange, disabled = false, perc
 
       </View>
       <View style={styles.endLabel} pointerEvents="none">
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="small" themeColor="textSecondary" allowFontScaling={false}>
           {MAX}
         </ThemedText>
       </View>
