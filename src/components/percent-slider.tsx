@@ -3,7 +3,7 @@
 //   - 눈금(점) 19개에 딱딱 맞춰 움직인다. 막대를 눌러도 가장 가까운 눈금으로 바로 간다.
 //   - 확대 효과: 손잡이에 가까운 눈금 점일수록 크게 보이고(돋보기처럼), 손잡이 위에는 지금 비율이 큰 글자로 떠 있다.
 //     끌고 있는 동안에는 손잡이와 글자가 더 커진다.
-//   - 막대 아래에는 눈금 숫자를 두지 않는다. 지금 비율은 손잡이 위의 큰 글자로 충분히 보이기 때문이다.
+//   - 눈금 숫자는 두지 않는다(지금 비율은 손잡이 위의 큰 글자로 보인다). 다만 범위를 알 수 있게 막대 양 끝 옆에 0과 90만 작게 둔다.
 //   - 금액을 직접 입력해서 5% 단위가 아닌 비율(예: 32.5%)이 되면, 손잡이는 그 위치에 그대로 놓이고 글자도 32.5%로 보인다.
 //   - 화면 낭독 기능(보이스오버/톡백)에서는 위아래로 쓸어서 5%씩 조절할 수 있다.
 // 새 패키지 없이 React Native 기본 터치 이벤트(onResponder...: 손가락이 닿고 움직일 때 알려 주는 것)로 만들었다.
@@ -62,7 +62,14 @@ export function PercentSlider({ label, percent, onChange, disabled = false, perc
   const bubbleLeft = Math.min(Math.max(0, trackWidth - BUBBLE_WIDTH), Math.max(0, thumbCenter - BUBBLE_WIDTH / 2));
 
   return (
-    <View style={[styles.wrapper, disabled && { opacity: 0.4 }]} onLayout={onLayout}>
+    // 가로 한 줄: [0] [막대(+ 위에 뜨는 글자)] [90]. 양 끝 숫자는 막대 옆에 붙여서 따로 한 줄을 차지하지 않는다.
+    <View style={[styles.row, disabled && { opacity: 0.4 }]}>
+      <View style={styles.endLabel} pointerEvents="none">
+        <ThemedText type="small" themeColor="textSecondary">
+          0
+        </ThemedText>
+      </View>
+      <View style={styles.middle} onLayout={onLayout}>
       {/* 손잡이 위에 떠 있는 비율 글자 (확대 효과). 손잡이를 따라 움직인다 */}
       <View style={styles.bubbleArea} pointerEvents="none">
         <View style={[styles.bubble, { left: bubbleLeft, transform: [{ scale: dragging ? 1.25 : 1 }] }]}>
@@ -125,12 +132,21 @@ export function PercentSlider({ label, percent, onChange, disabled = false, perc
         />
       </View>
 
+      </View>
+      <View style={styles.endLabel} pointerEvents="none">
+        <ThemedText type="small" themeColor="textSecondary">
+          {MAX}
+        </ThemedText>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: { gap: 2 },
+  row: { flexDirection: 'row', alignItems: 'flex-end' },
+  middle: { flex: 1, gap: 2 },
+  // 막대 높이에 맞춰 세로 가운데에 놓는 양 끝 숫자(0, 90)
+  endLabel: { width: 24, height: TOUCH_HEIGHT, alignItems: 'center', justifyContent: 'center' },
   bubbleArea: { height: BUBBLE_AREA, justifyContent: 'flex-end' },
   // 비율 글자를 담는 파란 알약. left 는 계산해서 넣는다(bubbleLeft).
   bubble: {
