@@ -104,6 +104,8 @@ iOS와 Android에서 실행되는 개인용 유틸리티 앱을 개발한다.
 
 - 앱 요구사항: `docs/APP_SPEC.md`
 - 아키텍처 및 설계 결정: `docs/ARCHITECTURE.md`
+- 진행 상황, 확인하지 못한 것, 다음 할 일: `docs/PROGRESS.md` (작업을 마칠 때마다 갱신한다)
+- 다른 AI 도구용 안내: `AGENTS.md`
 - 반복 작업 절차: `.claude/skills/` 아래의 개별 Skill
 
 `CLAUDE.md`에는 공통 원칙만 유지하고 상세 기능 명세는 별도 문서로 관리한다.
