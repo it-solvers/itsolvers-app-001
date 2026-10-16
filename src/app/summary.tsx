@@ -3,7 +3,7 @@
 //
 // [화면 구성]
 //   1) 차량 선택 정보: 제조사, 차종, 트림, 사양, 선택 옵션, 색상, 그리고 마지막에 "차량가격"
-//   2) 리스료 계산: 기간, 선납금, 보증금, 잔존가치, 금리를 고르거나 입력하면 월 납입금액이 바로 계산된다
+//   2) 리스료 계산: 기간, 선수금, 보증금, 잔존가치, 금리를 고르거나 입력하면 월 납입금액이 바로 계산된다
 //   (합계를 화면 맨 아래에 고정해 두지 않는다. 입력 칸이 많아서 고정 영역이 키보드를 가리기 때문이다.)
 //
 // [선택한 내용을 어떻게 받나?]
@@ -23,7 +23,7 @@ import { BrandLogo } from '@/components/brand-logo';
 import { ColorDot } from '@/components/color-dot';
 import { DataNotice } from '@/components/data-notice';
 import { LoadStatus } from '@/components/load-status';
-import { PercentSlider } from '@/components/percent-slider';
+import { PercentStepper } from '@/components/percent-stepper';
 import { RemoteImage } from '@/components/remote-image';
 import { Section } from '@/components/section';
 import { PriceDisclaimer, StudyNotice } from '@/components/study-notice';
@@ -276,7 +276,7 @@ function SummaryBody({
 }
 
 // ---------------------------------------------------------------------------
-// 리스료 계산 구역. 입력(기간, 선납금, 보증금, 잔존가치, 금리)과 결과(월 납입금액)를 보여준다.
+// 리스료 계산 구역. 입력(기간, 선수금, 보증금, 잔존가치, 금리)과 결과(월 납입금액)를 보여준다.
 // 계산식은 src/utils/lease.ts 와 docs/APP_SPEC.md 5장에 있다.
 //   vehiclePrice  차량가격(원). 직접 입력 모드에서 아직 입력하지 않았으면 0 이다.
 // ---------------------------------------------------------------------------
@@ -284,7 +284,7 @@ function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
   const theme = useTheme();
   // 오류 글자색: 어두운 배경에서도 잘 보이도록 다크 모드에서는 밝은 빨강을 쓴다.
   const errorColor = useColorScheme() === 'dark' ? '#ff8a80' : '#c0392b';
-  // 입력 값들. 선납금, 보증금, 잔존가치는 슬라이더로 고른 "비율(%)"만 들고 있고, 금액은 비율로 계산한다.
+  // 입력 값들. 선수금, 보증금, 잔존가치는 버튼으로 고른 "비율(%)"만 들고 있고, 금액은 비율로 계산한다.
   // 금리는 "5.25"처럼 글자로 보관한다. (입력 중인 "5." 같은 중간 상태를 그대로 보여줄 수 있어야 하기 때문이다)
   const [termMonths, setTermMonths] = useState<number>(36); // 처음에는 36개월을 선택해 둔다
   const [prepaidPercent, setPrepaidPercent] = useState(0);
@@ -292,7 +292,7 @@ function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
   const [residualPercent, setResidualPercent] = useState(0);
   const [rateText, setRateText] = useState('');
 
-  // 비율 → 금액(차량가격 기준, 원 단위 반올림). 슬라이더 아래에 보여주고 계산에도 쓴다.
+  // 비율 → 금액(차량가격 기준, 원 단위 반올림). 버튼 가운데에 보여주고 계산에도 쓴다.
   const prepaid = percentAmount(vehiclePrice, prepaidPercent);
   const deposit = percentAmount(vehiclePrice, depositPercent);
   const residual = percentAmount(vehiclePrice, residualPercent);
@@ -347,18 +347,18 @@ function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
           </View>
         </View>
 
-        {/* 선납금, 보증금, 잔존가치: 제목 바로 아래의 슬라이더로 비율을 고른다. 금액은 입력할 수 없고 계산된 값만 보인다. */}
-        <PercentSlider label="선납금" percents={LEASE_PERCENTS} value={prepaidPercent} onChange={setPrepaidPercent} amount={prepaid} />
+        {/* 선수금, 보증금, 잔존가치: 제목 바로 아래의 [−][+] 버튼으로 비율을 고른다. 금액은 입력할 수 없고 계산된 값만 보인다. */}
+        <PercentStepper label="선수금" percents={LEASE_PERCENTS} value={prepaidPercent} onChange={setPrepaidPercent} amount={prepaid} />
         <ThemedText type="small" themeColor="textSecondary">
           처음에 내는 돈(장기선수금). 기간 동안 나눠서 월 납입금에서 뺍니다.
         </ThemedText>
 
-        <PercentSlider label="보증금" percents={LEASE_PERCENTS} value={depositPercent} onChange={setDepositPercent} amount={deposit} />
+        <PercentStepper label="보증금" percents={LEASE_PERCENTS} value={depositPercent} onChange={setDepositPercent} amount={deposit} />
         <ThemedText type="small" themeColor="textSecondary">
           만기에 돌려받는 돈. 맡긴 돈의 월 이자만큼 월 납입금이 줄어듭니다.
         </ThemedText>
 
-        <PercentSlider label="잔존가치" percents={LEASE_PERCENTS} value={residualPercent} onChange={setResidualPercent} amount={residual} />
+        <PercentStepper label="잔존가치" percents={LEASE_PERCENTS} value={residualPercent} onChange={setResidualPercent} amount={residual} />
         <ThemedText type="small" themeColor="textSecondary">
           만기 때 차량의 가치. 클수록 월 납입금이 줄어듭니다.
         </ThemedText>
@@ -388,9 +388,9 @@ function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
                 {formatPrice(result.monthlyPayment)}
               </ThemedText>
             </View>
-            {/* 계산 과정: 기본 리스료에서 선납금 차감과 보증금 효과를 뺀 것이 월 납입금액이다 */}
+            {/* 계산 과정: 기본 리스료에서 선수금 차감과 보증금 효과를 뺀 것이 월 납입금액이다 */}
             <Line label="기본 리스료" value={formatPrice(result.baseMonthly)} />
-            <Line label="선납금 차감 (선납금 ÷ 기간)" value={`− ${formatPrice(result.prepaidDeduction)}`} />
+            <Line label="선수금 차감 (선수금 ÷ 기간)" value={`− ${formatPrice(result.prepaidDeduction)}`} />
             <Line label="보증금 효과 (보증금의 월 이자)" value={`− ${formatPrice(result.depositEffect)}`} />
             <ThemedText type="small" themeColor="textSecondary">
               부가세, 취득세·등록세, 보험료, 정비·수수료는 포함하지 않은 단순 계산입니다. 실제 금융사 견적과 다를 수

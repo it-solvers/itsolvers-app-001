@@ -5,16 +5,16 @@
 // [용어]
 //   차량가격   P   사용자가 고른 사양, 옵션, 색상의 합계
 //   기간       n   개월 수 (12, 24, 36, 48, 60 중 하나)
-//   선납금     S   처음에 내는 돈(장기선수금). 기간 동안 균등하게 나눠 월 납입금에서 뺀다.
+//   선수금     S   처음에 내는 돈(장기선수금). 기간 동안 균등하게 나눠 월 납입금에서 뺀다.
 //   보증금     D   처음에 맡기고 만기에 돌려받는 돈. 맡긴 돈의 이자만큼 월 납입금이 줄어든다.
 //   잔존가치   R   만기 때 차량의 가치. 클수록 월 납입금이 줄어든다.
 //   월 금리    i   연 금리(%) ÷ 100 ÷ 12
 //
 // [식]
 //   기본 리스료   = (P − R ÷ (1+i)^n) × i ÷ (1 − (1+i)^−n)    (i가 0이면 (P − R) ÷ n)
-//   선납금 차감   = S ÷ n
+//   선수금 차감   = S ÷ n
 //   보증금 효과   = D × i
-//   월 납입금액   = 기본 리스료 − 선납금 차감 − 보증금 효과
+//   월 납입금액   = 기본 리스료 − 선수금 차감 − 보증금 효과
 //   (각 항목을 먼저 원 단위로 반올림한 뒤 빼서, 화면에 보이는 숫자가 정확히 맞아떨어지게 한다.
 //    정확한 값으로 한 번에 계산해서 반올림하는 것과 1원 정도 다를 수 있다.)
 // 기본 리스료는 아이티해결단 사이트의 리스료 계산기와 같은 식이다.
@@ -26,8 +26,8 @@
 export const LEASE_TERMS = [12, 24, 36, 48, 60] as const;
 export type LeaseTerm = (typeof LEASE_TERMS)[number];
 
-/** 선납금, 보증금, 잔존가치 슬라이더에서 고를 수 있는 비율(%). 0%는 "선택 안 함"이다. 차량가격에 곱해서 금액을 정한다. */
-export const LEASE_PERCENTS = [0, 5, 10, 15, 20, 25, 30] as const;
+/** 선수금, 보증금, 잔존가치에서 고를 수 있는 비율(%): 0, 5, 10 ... 90. 0%는 "선택 안 함"이다. 차량가격에 곱해서 금액을 정한다. */
+export const LEASE_PERCENTS: readonly number[] = Array.from({ length: 19 }, (_, i) => i * 5);
 
 /** 차량가격의 percent% 금액(원 단위 반올림). 예: percentAmount(28_760_000, 10) → 2876000 */
 export function percentAmount(vehiclePrice: number, percent: number): number {
@@ -37,7 +37,7 @@ export function percentAmount(vehiclePrice: number, percent: number): number {
 export type LeaseInput = {
   vehiclePrice: number; // 차량가격(원)
   termMonths: number; // 기간(개월)
-  prepaid: number; // 선납금(원)
+  prepaid: number; // 선수금(원)
   deposit: number; // 보증금(원)
   residual: number; // 잔존가치(원)
   annualRatePercent: number; // 연 금리(%)
@@ -49,7 +49,7 @@ export type LeaseResult =
       ok: true;
       monthlyPayment: number; // 월 납입금액(원) = baseMonthly − prepaidDeduction − depositEffect
       baseMonthly: number; // 기본 리스료(원, 반올림)
-      prepaidDeduction: number; // 선납금 차감(원, 반올림)
+      prepaidDeduction: number; // 선수금 차감(원, 반올림)
       depositEffect: number; // 보증금 효과(원, 반올림)
     }
   | { ok: false; error: string };
@@ -61,10 +61,10 @@ function validate(input: LeaseInput): string | null {
   if (!numbers.every(Number.isFinite)) return '입력값에 숫자가 아닌 값이 있습니다.';
   if (vehiclePrice <= 0) return '차량가격이 0원 이하입니다. 차량 선택을 확인해 주세요.';
   if (!Number.isInteger(termMonths) || termMonths <= 0) return '기간을 선택해 주세요.';
-  if (prepaid < 0 || deposit < 0 || residual < 0) return '선납금, 보증금, 잔존가치는 0원 이상이어야 합니다.';
+  if (prepaid < 0 || deposit < 0 || residual < 0) return '선수금, 보증금, 잔존가치는 0원 이상이어야 합니다.';
   if (annualRatePercent < 0 || annualRatePercent > 100) return '금리는 0% 이상 100% 이하로 입력해 주세요.';
   if (residual > vehiclePrice) return '잔존가치는 차량가격을 넘을 수 없습니다.';
-  if (prepaid + deposit > vehiclePrice) return '선납금과 보증금의 합은 차량가격을 넘을 수 없습니다.';
+  if (prepaid + deposit > vehiclePrice) return '선수금과 보증금의 합은 차량가격을 넘을 수 없습니다.';
   return null;
 }
 
@@ -78,7 +78,7 @@ export function calcLeasePayment(input: LeaseInput): LeaseResult {
 
   // 1) 기본 리스료. 금리가 0이면 식의 분모가 0이 되므로 따로 계산한다. (차량가격에서 잔존가치를 뺀 만큼을 n개월로 나눔)
   const baseMonthly = i === 0 ? (P - R) / n : ((P - R / Math.pow(1 + i, n)) * i) / (1 - Math.pow(1 + i, -n));
-  // 2) 선납금: 기간 동안 균등하게 나눠서 뺀다. 3) 보증금: 맡긴 돈의 월 이자만큼 뺀다.
+  // 2) 선수금: 기간 동안 균등하게 나눠서 뺀다. 3) 보증금: 맡긴 돈의 월 이자만큼 뺀다.
   const prepaidDeduction = S / n;
   const depositEffect = D * i;
 

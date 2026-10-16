@@ -1,5 +1,5 @@
 // ============================================================================
-// 숫자를 입력하는 칸(제목 + 입력 + 단위). 리스료 계산의 선납금, 보증금, 잔존가치, 금리에 쓴다.
+// 숫자를 입력하는 칸(제목 + 입력 + 단위). 리스료 계산의 선수금, 보증금, 잔존가치, 금리에 쓴다.
 //   kind="amount"  금액(원): 숫자만 받고 천 단위 쉼표를 붙여 보여준다.  예) 3600000 → 3,600,000
 //   kind="rate"    금리(%): 숫자와 소수점(둘째 자리까지)을 받는다.      예) 5.25
 // 부모 화면이 값(value)을 들고 있고, 이 컴포넌트는 "입력이 바뀌었다"는 것만 알려 준다.
@@ -14,7 +14,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { cleanAmountText, cleanRateText, formatWithCommas } from '@/utils/lease';
 
 type AmountInputProps = {
-  label: string; // 입력 칸 제목 (예: "선납금")
+  label: string; // 입력 칸 제목 (예: "선수금")
   unit: string; // 단위 글자 (예: "원", "%")
   kind: 'amount' | 'rate';
   value: string; // 입력된 글자. 금액이면 숫자만("3600000"), 금리면 "5.25"처럼 들어 있다
