@@ -21,16 +21,17 @@ type AmountInputProps = {
   onChangeText: (cleaned: string) => void; // 정리된 글자를 부모에게 돌려준다
   placeholder?: string;
   hint?: string; // 칸 아래의 작은 설명
+  showLabel?: boolean; // false 면 제목 글자를 보이지 않는다(부모가 더 큰 제목을 따로 보여줄 때). 화면 낭독용 이름은 그대로 남는다
 };
 
-export function AmountInput({ label, unit, kind, value, onChangeText, placeholder, hint }: AmountInputProps) {
+export function AmountInput({ label, unit, kind, value, onChangeText, placeholder, hint, showLabel = true }: AmountInputProps) {
   const theme = useTheme();
   // 금액은 쉼표를 붙여 보여주고, 금리는 그대로 보여준다.
   const shown = kind === 'amount' ? formatWithCommas(value) : value;
 
   return (
     <View style={styles.wrapper}>
-      <ThemedText type="smallBold">{label}</ThemedText>
+      {showLabel ? <ThemedText type="smallBold">{label}</ThemedText> : null}
       <View style={[styles.field, { backgroundColor: theme.background, borderColor: theme.backgroundSelected }]}>
         <TextInput
           // 화면 낭독 기능이 칸의 이름을 읽을 수 있게 한다

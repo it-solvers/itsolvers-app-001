@@ -6,6 +6,7 @@
 //   - 금액이 5% 단위에 딱 맞지 않을 때 [+]는 바로 위 5% 단위로, [−]는 바로 아래 5% 단위로 간다.
 //   - 길게 누르고 있으면 빠르게 계속 바뀐다. 0%에서 90%(STEP_MAX)까지 버튼으로 움직일 수 있다.
 //     (금액 입력은 90%를 넘겨도 되지만, 차량가격을 넘는 값은 계산 단계의 검증이 막는다.)
+// 항목마다 제목이 큰 카드로 따로 보여서 선수금, 보증금, 잔존가치가 헷갈리지 않는다.
 // 값(글자)은 부모 화면이 들고 있다. 이 컴포넌트는 "바뀐 금액 글자"만 부모에게 알려 준다.
 // ============================================================================
 
@@ -106,9 +107,14 @@ export function AmountPercentField({ label, vehiclePrice, amountText, onChangeAm
   };
 
   return (
-    <View style={styles.wrapper}>
-      {/* 주인공: 금액 입력 칸 */}
+    // 항목마다 따로 보이는 카드. 큰 제목으로 어느 항목의 입력인지 분명히 한다.
+    <View style={[styles.wrapper, { backgroundColor: theme.background, borderColor: theme.backgroundSelected }]}>
+      <ThemedText type="subtitle" style={styles.title} accessibilityRole="header">
+        {label}
+      </ThemedText>
+      {/* 주인공: 금액 입력 칸 (제목은 위에서 크게 보여주므로 칸의 작은 제목은 숨긴다) */}
       <AmountInput
+        showLabel={false}
         label={label}
         unit="원"
         kind="amount"
@@ -140,7 +146,8 @@ export function AmountPercentField({ label, vehiclePrice, amountText, onChangeAm
 }
 
 const styles = StyleSheet.create({
-  wrapper: { gap: Spacing.two },
+  wrapper: { gap: Spacing.two, padding: Spacing.three, borderWidth: 1, borderRadius: Spacing.three },
+  title: { fontSize: 22, lineHeight: 30 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   // 누르기 쉬운 크기(48 이상)의 동그란 버튼
   button: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
