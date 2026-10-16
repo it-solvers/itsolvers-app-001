@@ -43,6 +43,8 @@ import {
   parseNumberText,
 } from '@/utils/lease';
 import { carImageUrl, colorChipUrl } from '@/utils/images';
+import { shareText, type ShareOutcome } from '@/utils/share';
+import { buildLeaseShareText } from '@/utils/share-text';
 import { calcBreakdown, formatExtra, formatPrice, selectedItems, type Selection } from '@/utils/price';
 import { trimPurposeName } from '@/utils/trim';
 
@@ -171,6 +173,16 @@ function SummaryBody({
   // 엔진 이름과 트림 이름을 공백으로 이어 붙인다. 비어 있는 것은 걸러낸다.
   const trimLabel = [params.engineName, params.trimName].filter(Boolean).join(' ');
 
+  // 공유 글자에 넣을 차량 정보 줄들 (제조사·차종, 트림, 사양, 옵션, 색상)
+  const vehicleLines = [
+    `${brand?.name ?? ''} ${params.carName ?? ''}`.trim(),
+    `트림  ${trimLabel}${purpose ? ` (${purpose})` : ''}`,
+    items.spec ? `사양  ${items.spec.name}` : '',
+    items.options.length > 0 ? `옵션  ${items.options.map((o) => o.name).join(', ')}` : '',
+    items.exterior ? `외장  ${items.exterior.name}` : '',
+    items.interior ? `내장  ${items.interior.name}` : '',
+  ].filter((line) => line !== '');
+
   // 선택한 사양을 가격 데이터에서 찾지 못하는 비정상 상황의 안내
   if (!items.spec) {
     return (
@@ -264,7 +276,7 @@ function SummaryBody({
         </Section>
 
         {/* 아래쪽: 리스료 계산. 입력이 바뀔 때마다 월 납입금액이 바로 계산된다. */}
-        <LeaseSection vehiclePrice={breakdown.total} />
+        <LeaseSection vehiclePrice={breakdown.total} vehicleLines={vehicleLines} />
 
         {/* 금액이 보이는 화면에는 항상 "학습용" 안내를 눈에 띄는 색으로 함께 보여준다 (문구는 constants/notices.ts) */}
         <PriceDisclaimer />
@@ -277,8 +289,9 @@ function SummaryBody({
 // 리스료 계산 구역. 입력(기간, 선수금, 보증금, 잔존가치, 금리)과 결과(월 납입금액)를 보여준다.
 // 계산식은 src/utils/lease.ts 와 docs/APP_SPEC.md 5장에 있다.
 //   vehiclePrice  차량가격(원). 직접 입력 모드에서 아직 입력하지 않았으면 0 이다.
+//   vehicleLines  공유할 때 글자에 넣을 차량 정보 줄들. 직접 입력 모드에서는 비어 있다.
 // ---------------------------------------------------------------------------
-function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
+function LeaseSection({ vehiclePrice, vehicleLines = [] }: { vehiclePrice: number; vehicleLines?: string[] }) {
   const theme = useTheme();
   // 오류 글자색: 어두운 배경에서도 잘 보이도록 다크 모드에서는 밝은 빨강을 쓴다.
   const errorColor = useColorScheme() === 'dark' ? '#ff8a80' : '#c0392b';
@@ -290,6 +303,8 @@ function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
   const [depositText, setDepositText] = useState('');
   const [residualText, setResidualText] = useState('');
   const [rateText, setRateText] = useState('');
+  // 공유 결과 안내 (복사했는지 등). 계산 입력이 바뀌면 지운다.
+  const [shareNotice, setShareNotice] = useState('');
 
   // 입력한 금액 글자 → 숫자. 비어 있으면 0원이다.
   const prepaid = parseNumberText(prepaidText);
@@ -313,6 +328,29 @@ function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
           }),
     [vehiclePrice, termMonths, prepaid, deposit, residual, rateText, rateEmpty, noPrice],
   );
+
+  // "견적 공유하기": 지금 계산 결과를 글자로 만들어 공유창을 연다 (웹 PC 에서는 복사)
+  const onShare = async (monthlyPayment: number) => {
+    const outcome: ShareOutcome = await shareText(
+      buildLeaseShareText({
+        vehicleLines,
+        vehiclePrice,
+        termMonths,
+        prepaid,
+        deposit,
+        residual,
+        annualRatePercent: parseNumberText(rateText),
+        monthlyPayment,
+      }),
+    );
+    setShareNotice(
+      outcome === 'copied'
+        ? '견적을 복사했습니다. 붙여넣어서 보내 보세요.'
+        : outcome === 'failed'
+          ? '공유할 수 없습니다. 이 기기나 브라우저에서는 공유 기능을 쓸 수 없습니다.'
+          : '',
+    );
+  };
 
   return (
     <Section title="리스료 계산">
@@ -402,6 +440,21 @@ function LeaseSection({ vehiclePrice }: { vehiclePrice: number }) {
               부가세, 취득세·등록세, 보험료, 정비·수수료는 포함하지 않은 단순 계산입니다. 실제 금융사 견적과 다를 수
               있습니다.
             </ThemedText>
+            {/* 공유하기: 결과를 글자로 보낸다. 복사만 된 경우(PC 웹)에는 아래에 안내를 보여준다 */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="견적 공유하기"
+              onPress={() => onShare(result.monthlyPayment)}
+              style={({ pressed }) => [styles.shareButton, { opacity: pressed ? 0.8 : 1 }]}>
+              <ThemedText type="smallBold" style={styles.shareButtonText}>
+                견적 공유하기
+              </ThemedText>
+            </Pressable>
+            {shareNotice ? (
+              <ThemedText type="small" themeColor="textSecondary" accessibilityRole="alert">
+                {shareNotice}
+              </ThemedText>
+            ) : null}
           </>
         ) : (
           // 입력이 잘못되었을 때: 경고 색으로 이유를 알려 준다 (화면 낭독 기능이 바로 읽도록 alert)
@@ -449,6 +502,14 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
   },
+  shareButton: {
+    minHeight: 48,
+    borderRadius: Spacing.three,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2563eb',
+  },
+  shareButtonText: { color: '#ffffff', fontSize: 16 },
   card: { borderRadius: Spacing.three, padding: Spacing.three, gap: Spacing.two },
   line: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: Spacing.three },
   lineLabel: { flex: 1 },
