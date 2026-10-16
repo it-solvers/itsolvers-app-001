@@ -57,6 +57,8 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
           importantForAutofill="no"
           autoComplete="off"
           autoCorrect={false}
+          // 칸을 누르면 안의 숫자를 모두 선택한다. 그대로 새 숫자를 치면 기존 값이 지워지고 바뀐다.
+          selectTextOnFocus
           selectionColor={FOCUS_COLOR}
           cursorColor={FOCUS_COLOR}
           style={[styles.input, { color: theme.text }]}
