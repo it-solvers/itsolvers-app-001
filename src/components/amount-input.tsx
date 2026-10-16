@@ -29,6 +29,8 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
   const theme = useTheme();
   // 입력 중인지. 입력 중이면 칸 테두리를 파랗게 해서 "여기에 입력 중"임을 보여준다. (기기 기본 포커스 표시를 대신한다)
   const [focused, setFocused] = useState(false);
+  // 안의 글자가 전부 선택된 상태인지. 선택되면 파란 배경이 깔리므로 글자색을 흰색으로 바꿔 읽을 수 있게 한다.
+  const [allSelected, setAllSelected] = useState(false);
   // 금액은 쉼표를 붙여 보여주고, 금리는 그대로 보여준다.
   const shown = kind === 'amount' ? formatWithCommas(value) : value;
 
@@ -51,7 +53,15 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
           placeholder={placeholder}
           placeholderTextColor={theme.textSecondary}
           onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          onBlur={() => {
+            setFocused(false);
+            setAllSelected(false);
+          }}
+          // 선택 범위가 바뀔 때마다 "처음부터 끝까지 전부 선택"인지 확인한다. (칸을 누르면 전체 선택, 한 글자 입력하면 해제)
+          onSelectionChange={(event) => {
+            const { start, end } = event.nativeEvent.selection;
+            setAllSelected(shown.length > 0 && start === 0 && end === shown.length);
+          }}
           // 입력 칸을 눌렀을 때 기기가 기본으로 그리는 어두운 네모(포커스 배경, 밑줄, 자동 채우기 표시)를 없앤다.
           underlineColorAndroid="transparent"
           importantForAutofill="no"
@@ -61,7 +71,7 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
           selectTextOnFocus
           selectionColor={FOCUS_COLOR}
           cursorColor={FOCUS_COLOR}
-          style={[styles.input, { color: theme.text }]}
+          style={[styles.input, { color: allSelected ? '#ffffff' : theme.text }]}
         />
         <ThemedText themeColor="textSecondary" style={styles.unit}>
           {unit}
