@@ -16,12 +16,13 @@
 
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AmountInput } from '@/components/amount-input';
 import { BrandLogo } from '@/components/brand-logo';
 import { ColorDot } from '@/components/color-dot';
 import { DataNotice } from '@/components/data-notice';
+import { KeyboardScrollView } from '@/components/keyboard-scroll';
 import { LoadStatus } from '@/components/load-status';
 import { AmountPercentField } from '@/components/amount-percent-field';
 import { RemoteImage } from '@/components/remote-image';
@@ -132,7 +133,7 @@ function ManualBody() {
   const vehiclePrice = parseNumberText(priceText);
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.scroll}>
+    <KeyboardScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.scroll}>
       {/* 맨 위가 바로 차량가격: 직접 입력한다 */}
       <Section title="차량가격">
         <Card>
@@ -150,7 +151,7 @@ function ManualBody() {
 
       <LeaseSection vehiclePrice={vehiclePrice} />
       <PriceDisclaimer />
-    </ScrollView>
+    </KeyboardScrollView>
   );
 }
 
@@ -195,7 +196,7 @@ function SummaryBody({
 
   return (
     <>
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.scroll}>
+      <KeyboardScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.scroll}>
         <DataNotice result={result} />
 
         <Section title="차량">
@@ -281,7 +282,7 @@ function SummaryBody({
 
         {/* 금액이 보이는 화면에는 항상 "학습용" 안내를 눈에 띄는 색으로 함께 보여준다 (문구는 constants/notices.ts) */}
         <PriceDisclaimer />
-      </ScrollView>
+      </KeyboardScrollView>
     </>
   );
 }

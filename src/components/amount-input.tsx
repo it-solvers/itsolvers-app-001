@@ -6,8 +6,10 @@
 // (이렇게 값을 부모가 들고 있는 입력 칸을 "제어되는 입력"이라고 부른다)
 // ============================================================================
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, TextInput, View, type TextStyle } from 'react-native';
+
+import { useKeyboardScroll } from '@/components/keyboard-scroll';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -29,6 +31,9 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
   const theme = useTheme();
   // 입력 중인지. 입력 중이면 칸 테두리를 파랗게 해서 "여기에 입력 중"임을 보여준다. (기기 기본 포커스 표시를 대신한다)
   const [focused, setFocused] = useState(false);
+  // 키보드가 올라와도 이 칸이 가려지지 않도록, 눌렀을 때 화면을 스크롤해 주는 기능 (components/keyboard-scroll.tsx)
+  const { ensureVisible } = useKeyboardScroll();
+  const fieldRef = useRef<View>(null);
   // 안의 글자가 전부 선택된 상태인지. 선택되면 파란 배경이 깔리므로 글자색을 흰색으로 바꿔 읽을 수 있게 한다.
   const [allSelected, setAllSelected] = useState(false);
   // 금액은 쉼표를 붙여 보여주고, 금리는 그대로 보여준다.
@@ -38,6 +43,7 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
     <View style={styles.wrapper}>
       {showLabel ? <ThemedText type="smallBold">{label}</ThemedText> : null}
       <View
+        ref={fieldRef}
         style={[
           styles.field,
           { backgroundColor: theme.background, borderColor: focused ? FOCUS_COLOR : theme.backgroundSelected },
@@ -52,7 +58,11 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
           keyboardType={kind === 'amount' ? 'number-pad' : 'decimal-pad'}
           placeholder={placeholder}
           placeholderTextColor={theme.textSecondary}
-          onFocus={() => setFocused(true)}
+          onFocus={() => {
+            setFocused(true);
+            // 키보드가 아직 올라오는 중일 수 있어서 잠깐 뒤에 위치를 맞춘다 (키보드가 다 올라온 뒤에도 한 번 더 맞춘다)
+            setTimeout(() => ensureVisible(fieldRef.current), 100);
+          }}
           onBlur={() => {
             setFocused(false);
             setAllSelected(false);
