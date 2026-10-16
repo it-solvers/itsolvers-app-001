@@ -1,11 +1,10 @@
 // ============================================================================
-// 비율 슬라이더. 선수금, 보증금, 잔존가치 카드 안에서 차량가격 대비 비율(0% ~ 90%, 5% 단위)을 막대를 끌어서 고른다.
-//   - 눈금(점) 19개에 딱딱 맞춰 움직인다. 막대를 눌러도 가장 가까운 눈금으로 바로 간다.
-//   - 확대 효과: 손잡이에 가까운 눈금 점일수록 크게 보이고(돋보기처럼), 손잡이 위에는 지금 비율이 큰 글자로 떠 있다.
-//     끌고 있는 동안에는 손잡이와 글자가 더 커진다.
+// 비율 슬라이더. 선수금, 보증금, 잔존가치 카드 안에서 차량가격 대비 비율(0% ~ 90%, 10% 단위)을 막대를 끌어서 고른다.
+//   - 10% 칸 10개(0, 10, ... 90)에 딱딱 맞춰 움직인다. 막대를 눌러도 가장 가까운 칸으로 바로 간다. 눈금 점은 그리지 않는다.
+//   - 확대 효과: 손잡이 위에 지금 비율이 큰 글자로 떠 있고, 끌고 있는 동안에는 손잡이와 글자가 더 커진다.
 //   - 눈금 숫자는 두지 않는다(지금 비율은 손잡이 위의 큰 글자로 보인다). 다만 범위를 알 수 있게 막대 양 끝 옆에 0과 90만 작게 둔다.
-//   - 금액을 직접 입력해서 5% 단위가 아닌 비율(예: 32.5%)이 되면, 손잡이는 그 위치에 그대로 놓이고 글자도 32.5%로 보인다.
-//   - 화면 낭독 기능(보이스오버/톡백)에서는 위아래로 쓸어서 5%씩 조절할 수 있다.
+//   - 금액을 직접 입력해서 10% 단위가 아닌 비율(예: 32.5%)이 되면, 손잡이는 그 위치에 그대로 놓이고 글자도 32.5%로 보인다.
+//   - 화면 낭독 기능(보이스오버/톡백)에서는 위아래로 쓸어서 10%씩 조절할 수 있다.
 // 새 패키지 없이 React Native 기본 터치 이벤트(onResponder...: 손가락이 닿고 움직일 때 알려 주는 것)로 만들었다.
 // 값(비율)은 부모가 들고 있고, 이 컴포넌트는 "바뀐 비율"만 알려 준다. (금액 계산은 부모의 일)
 // ============================================================================
@@ -18,20 +17,19 @@ import { useTheme } from '@/hooks/use-theme';
 import { snapIndex } from '@/utils/lease';
 
 const BLUE = '#2563eb';
-const STEP = 5; // 눈금 간격(%)
+const STEP = 10; // 눈금 간격(%)
 const MAX = 90; // 가장 큰 비율(%)
-const COUNT = MAX / STEP + 1; // 눈금 개수 (0, 5, ... 90 → 19개)
+const COUNT = MAX / STEP + 1; // 칸 개수 (0, 10, ... 90 → 10칸)
 const THUMB = 28; // 동그란 손잡이 크기
 const TRACK_HEIGHT = 6;
 const TOUCH_HEIGHT = 44; // 누르기 쉬운 터치 영역 높이
 const BUBBLE_WIDTH = 72; // 비율 글자 알약의 폭
 const BUBBLE_AREA = 40; // 손잡이 위에 뜨는 비율 글자 자리
-const MAGNIFY_RANGE = 2.5; // 손잡이에서 눈금 몇 칸 안까지 점이 커지는지
 
 type PercentSliderProps = {
   label: string; // 항목 이름 (화면 낭독용. 예: "선수금")
   percent: number; // 지금 비율(%). 5의 배수가 아니어도 된다 (예: 32.5)
-  onChange: (percent: number) => void; // 5% 단위로 고른 비율
+  onChange: (percent: number) => void; // 10% 단위로 고른 비율
   disabled?: boolean; // true 면 흐리게 보이고 움직이지 않는다 (차량가격이 없을 때)
   percentText: string; // 손잡이 위에 크게 보일 글자 (예: "32.5%")
 };
@@ -53,7 +51,7 @@ export function PercentSlider({ label, percent, onChange, disabled = false, perc
     if (next !== percent) onChange(next);
   };
 
-  // "눈금 번호"로 나타낸 손잡이 위치 (0 ~ 18, 소수 가능). 90%를 넘는 비율은 끝에 붙여 둔다.
+  // "눈금 번호"로 나타낸 손잡이 위치 (0 ~ 9, 소수 가능). 90%를 넘는 비율은 끝에 붙여 둔다.
   const position = Math.min(MAX, Math.max(0, percent)) / STEP;
   const usable = Math.max(0, trackWidth - THUMB);
   const xOf = (index: number) => (index / (COUNT - 1)) * usable + THUMB / 2; // 눈금 번호 → 가로 위치(중심)
@@ -106,27 +104,6 @@ export function PercentSlider({ label, percent, onChange, disabled = false, perc
         <View style={[styles.track, { backgroundColor: theme.backgroundSelected }]} pointerEvents="none" />
         {/* 지금 값까지 채워진 부분(파랑) */}
         <View pointerEvents="none" style={[styles.fill, { width: thumbCenter - THUMB / 2 }]} />
-        {/* 눈금 점. 손잡이에 가까울수록 크게 보인다(확대 효과): 거리 0칸이면 3배, MAGNIFY_RANGE 칸 밖이면 원래 크기 */}
-        {Array.from({ length: COUNT }, (_, i) => {
-          const near = Math.max(0, 1 - Math.abs(i - position) / MAGNIFY_RANGE); // 0(멀다) ~ 1(손잡이 위)
-          const size = 4 + near * 8;
-          return (
-            <View
-              key={i}
-              pointerEvents="none"
-              style={{
-                position: 'absolute',
-                width: size,
-                height: size,
-                borderRadius: size / 2,
-                left: xOf(i) - size / 2,
-                top: TOUCH_HEIGHT / 2 - size / 2,
-                backgroundColor: i <= position ? BLUE : theme.textSecondary,
-                opacity: near > 0.05 ? 1 : 0.7,
-              }}
-            />
-          );
-        })}
         {/* 손잡이(동그라미). 끌고 있으면 더 크게 */}
         <View
           pointerEvents="none"
