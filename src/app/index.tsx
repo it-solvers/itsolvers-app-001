@@ -6,6 +6,7 @@
 import { Stack, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
+import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { StudyNotice } from '@/components/study-notice';
 import { ThemedText } from '@/components/themed-text';
@@ -126,6 +127,8 @@ export default function LandingScreen() {
           <ThemedText style={styles.startButtonText}>견적하기</ThemedText>
         </Pressable>
       </ScrollView>
+      {/* 맨 아래: 회사 정보와 저작권 표시 푸터 */}
+      <SiteFooter />
     </ThemedView>
   );
 }
