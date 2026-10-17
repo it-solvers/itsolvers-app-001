@@ -7,7 +7,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { FOOTER_LINES } from '@/constants/site';
+import { COPYRIGHT, FOOTER_LINES } from '@/constants/site';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 
 export function SiteFooter() {
@@ -23,6 +23,7 @@ export function SiteFooter() {
           </Text>
         ))}
       </View>
+      <Text style={styles.copyright}>{COPYRIGHT}</Text>
     </View>
   );
 }
@@ -39,5 +40,15 @@ const styles = StyleSheet.create({
     columnGap: 8,
   },
   strong: { color: '#e5e7eb', fontSize: 13, fontWeight: 700, lineHeight: 20 },
+  copyright: {
+    color: '#98a2b3',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: Spacing.one,
+    paddingHorizontal: Spacing.three,
+    maxWidth: MaxContentWidth,
+    width: '100%',
+    alignSelf: 'center',
+  },
   rest: { color: '#98a2b3', fontSize: 13, lineHeight: 20 },
 });

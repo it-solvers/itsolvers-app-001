@@ -35,3 +35,4 @@ export const GOOGLE_SITE_VERIFICATION = 'XkM_cxWA2-T6lbfCmju_esNcvG67RDEw7AtEqtj
 export const COMPANY_NAME = '아이티해결단';
 export const COMPANY_URL = 'https://itsolvers.co.kr/';
 export const FOOTER_LINES = ['아이티해결단 (IT Solvers)', '대표 이혁', '사업자등록번호 364-11-03265'];
+export const COPYRIGHT = `© ${new Date().getFullYear()} 아이티해결단 (IT Solvers). All rights reserved.`;
