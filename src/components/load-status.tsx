@@ -10,6 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import type { LoadState } from '@/hooks/use-load';
 import { useTheme } from '@/hooks/use-theme';
+import { t } from '@/i18n';
 
 type LoadStatusProps = {
   state: LoadState<unknown>; // useLoad 가 알려주는 상태 (loading / error / ready)
@@ -43,7 +44,7 @@ export function LoadStatus({ state, loadingText, errorText, onRetry }: LoadStatu
             accessibilityRole="button"
             onPress={onRetry}
             style={[styles.retry, { backgroundColor: theme.backgroundSelected }]}>
-            <ThemedText>다시 시도</ThemedText>
+            <ThemedText>{t('common.retry')}</ThemedText>
           </Pressable>
         </>
       )}

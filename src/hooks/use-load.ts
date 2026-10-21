@@ -14,6 +14,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { t } from '@/i18n';
 import type { LoadResult } from '@/storage/cache';
 
 // 화면이 받는 상태. status 값에 따라 들고 있는 정보가 다르다. (오류일 때만 message, 완료일 때만 result)
@@ -45,7 +46,7 @@ export function useLoad<T>(load: () => Promise<LoadResult<T>>) {
       })
       .catch((error: unknown) => {
         if (!cancelled) {
-          const message = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
+          const message = error instanceof Error ? error.message : t('common.unknownError');
           setStored({ load, attempt, state: { status: 'error', message } });
         }
       });

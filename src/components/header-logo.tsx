@@ -7,13 +7,14 @@
 import { Image } from 'expo-image';
 import { Linking, Pressable } from 'react-native';
 
-import { COMPANY_NAME, COMPANY_URL } from '@/constants/site';
+import { COMPANY_URL } from '@/constants/site';
+import { t } from '@/i18n';
 
 export function HeaderLogo() {
   return (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={`${COMPANY_NAME} 사이트로 이동`}
+      accessibilityLabel={t('company.goToSite', { name: t('company.name') })}
       onPress={() => Linking.openURL(COMPANY_URL)}
       // 눈에 보이는 로고는 작지만 누르는 영역은 넉넉하게 (hitSlop)
       hitSlop={10}>
@@ -21,7 +22,7 @@ export function HeaderLogo() {
       <Image
         source={require('@/assets/images/company-logo.png')}
         contentFit="contain"
-        accessibilityLabel={`${COMPANY_NAME} 로고`}
+        accessibilityLabel={t('company.logo', { name: t('company.name') })}
         style={{ height: 26, aspectRatio: 7 / 4, borderRadius: 4 }}
       />
     </Pressable>

@@ -15,12 +15,13 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { cleanAmountText, cleanRateText, formatWithCommas } from '@/utils/lease';
+import { shownToWonDigits, wonDigitsToShown } from '@/utils/price';
 
 type AmountInputProps = {
   label: string; // 입력 칸 제목 (예: "선수금")
   unit: string; // 단위 글자 (예: "원", "%")
   kind: 'amount' | 'rate';
-  value: string; // 입력된 글자. 금액이면 숫자만("3600000"), 금리면 "5.25"처럼 들어 있다
+  value: string; // 입력된 글자. 금액이면 원 단위 숫자만("3600000"), 금리면 "5.25"처럼 들어 있다. (영어에서는 칸 안에서만 달러로 환산해 보여준다)
   onChangeText: (cleaned: string) => void; // 정리된 글자를 부모에게 돌려준다
   placeholder?: string;
   hint?: string; // 칸 아래의 작은 설명
@@ -41,7 +42,7 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
   // (기기의 selectTextOnFocus 는 입력 도중에 다시 전체 선택을 걸어 "3.5" 입력 때 앞 숫자가 지워지는 문제가 있었다)
   const [selectAll, setSelectAll] = useState(false);
   // 금액은 쉼표를 붙여 보여주고, 금리는 그대로 보여준다.
-  const shown = kind === 'amount' ? formatWithCommas(value) : value;
+  const shown = kind === 'amount' ? formatWithCommas(wonDigitsToShown(value)) : value;
 
   return (
     <View style={styles.wrapper}>
@@ -60,7 +61,7 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
           // 사용자가 글자를 바꿀 때마다 숫자 외의 글자를 걸러서 부모에게 알린다
           onChangeText={(text) => {
             setSelectAll(false); // 입력이 시작되면 전체 선택 지정을 푼다
-            onChangeText(kind === 'amount' ? cleanAmountText(text) : cleanRateText(text));
+            onChangeText(kind === 'amount' ? shownToWonDigits(cleanAmountText(text)) : cleanRateText(text));
           }}
           selection={selectAll ? { start: 0, end: shown.length } : undefined}
           // 숫자 키패드를 띄운다. 금리는 소수점이 필요해서 decimal-pad

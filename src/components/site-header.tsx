@@ -11,8 +11,9 @@ import { useRouter } from 'expo-router';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { COMPANY_NAME, COMPANY_URL } from '@/constants/site';
+import { COMPANY_URL } from '@/constants/site';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { t } from '@/i18n';
 
 // 회사 사이트(css/styles.css)의 헤더 색. 회사 사이트는 다크 모드에서도 헤더를 흰색으로 둔다.
 // 로고 이미지가 불투명한 흰 배경이라서, 어두운 배경 위에 놓으면 흰 상자가 튀어 보이기 때문에 같은 방식을 따랐다.
@@ -36,7 +37,7 @@ export function SiteHeader({ showBack = false }: { showBack?: boolean }) {
         {canGoBack ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="뒤로 가기"
+            accessibilityLabel={t('company.back')}
             onPress={() => router.back()}
             style={styles.backButton}>
             <Text style={[styles.backText, { color: colors.text }]}>‹</Text>
@@ -45,17 +46,17 @@ export function SiteHeader({ showBack = false }: { showBack?: boolean }) {
         {/* 로고와 회사 이름. 누르면 회사 사이트가 열린다 (회사 사이트에서는 메인으로 이동하는 로고다) */}
         <Pressable
           accessibilityRole="link"
-          accessibilityLabel={`${COMPANY_NAME} 사이트로 이동`}
+          accessibilityLabel={t('company.goToSite', { name: t('company.name') })}
           onPress={() => Linking.openURL(COMPANY_URL)}
           style={styles.logo}>
           {/* 로고 원본은 300x177(약 7:4). 높이를 고정하고 비율은 유지한다(contentFit="contain") */}
           <Image
             source={require('@/assets/images/company-logo.png')}
             contentFit="contain"
-            accessibilityLabel={`${COMPANY_NAME} 로고`}
+            accessibilityLabel={t('company.logo', { name: t('company.name') })}
             style={styles.logoImage}
           />
-          <Text style={[styles.logoText, { color: colors.text }]}>{COMPANY_NAME}</Text>
+          <Text style={[styles.logoText, { color: colors.text }]}>{t('company.name')}</Text>
         </Pressable>
 
         {/* 회사 사이트의 메뉴 대신 링크 하나만 둔다 (이 앱에는 이동할 구역이 없다) */}
@@ -63,7 +64,7 @@ export function SiteHeader({ showBack = false }: { showBack?: boolean }) {
           accessibilityRole="link"
           onPress={() => Linking.openURL(COMPANY_URL)}
           style={styles.linkButton}>
-          <Text style={[styles.linkText, { color: colors.link }]}>회사 소개</Text>
+          <Text style={[styles.linkText, { color: colors.link }]}>{t('company.about')}</Text>
         </Pressable>
       </View>
     </View>

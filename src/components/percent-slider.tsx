@@ -14,6 +14,7 @@ import { StyleSheet, View, type GestureResponderEvent, type LayoutChangeEvent } 
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
+import { t } from '@/i18n';
 import { snapIndex } from '@/utils/lease';
 
 const BLUE = '#2563eb';
@@ -81,8 +82,8 @@ export function PercentSlider({ label, percent, onChange, disabled = false, perc
         tabIndex={-1}
         accessible
         accessibilityRole="adjustable"
-        accessibilityLabel={`${label} 비율`}
-        accessibilityValue={{ min: 0, max: MAX, now: Math.round(percent), text: `차량가격의 ${percentText}` }}
+        accessibilityLabel={t('amount.sliderLabel', { label })}
+        accessibilityValue={{ min: 0, max: MAX, now: Math.round(percent), text: t('amount.sliderValue', { percent: percentText }) }}
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
         onAccessibilityAction={(event) => {
           if (disabled) return;

@@ -24,6 +24,7 @@ import {
 } from '@/constants/site';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { t } from '@/i18n';
 
 // 검색엔진에 알려 주는 구조화 데이터(JSON-LD). "이 페이지는 어떤 웹앱이고 누가 만들었는지"를 기계가 읽기 쉬운 형태로 적은 것이다.
 const STRUCTURED_DATA = {
@@ -99,23 +100,22 @@ export default function LandingScreen() {
         contentContainerStyle={styles.scroll}>
         <ThemedView style={styles.hero}>
           <ThemedText type="subtitle" style={styles.heading}>
-            리스료 <Text style={styles.accent}>견적</Text>
+            {t('landing.headingLead')} <Text style={styles.accent}>{t('landing.headingAccent')}</Text>
           </ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.centerText}>
-            제조사, 차종, 트림, 옵션을 골라 가격을 확인해 볼 수 있습니다.
+            {t('landing.description')}
           </ThemedText>
         </ThemedView>
 
         {/* accessibilityRole: 화면 낭독 기능(보이스오버/톡백)이 이 요소를 어떻게 읽을지 알려 준다 */}
         <ThemedView type="backgroundElement" style={styles.notice} accessibilityRole="summary">
-          <ThemedText type="smallBold">안내</ThemedText>
-          <ThemedText>이것은 학습을 위한 것입니다. 데이터는 정확하지 않을 수 있습니다.</ThemedText>
+          <ThemedText type="smallBold">{t('landing.noticeTitle')}</ThemedText>
+          <ThemedText>{t('landing.notice1')}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            실제 구매 가격과 옵션 구성은 제조사 또는 영업점에서 반드시 확인하세요.
+            {t('landing.notice2')}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            가격 정보는 현대자동차 사이트에서 가져오며, 제조사의 공식 서비스가 아닙니다. 현재는 현대자동차 승용차만
-            지원합니다.
+            {t('landing.notice3')}
           </ThemedText>
         </ThemedView>
 
@@ -124,7 +124,7 @@ export default function LandingScreen() {
           accessibilityRole="button"
           onPress={() => router.push('/brands')}
           style={({ pressed }) => [styles.startButton, { opacity: pressed ? 0.8 : 1 }]}>
-          <ThemedText style={styles.startButtonText}>견적하기</ThemedText>
+          <ThemedText style={styles.startButtonText}>{t('landing.start')}</ThemedText>
         </Pressable>
       </ScrollView>
       {/* 맨 아래: 회사 정보와 저작권 표시 푸터 */}

@@ -35,6 +35,7 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useLoad } from '@/hooks/use-load';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
+import { t } from '@/i18n';
 import type { LoadResult } from '@/storage/cache';
 import { getTrimPrice } from '@/storage/vehicleData';
 import type { TrimPrice } from '@/types/car';
@@ -44,6 +45,7 @@ import {
   percentAmount,
   parseNumberText,
 } from '@/utils/lease';
+import { translateName } from '@/utils/name-dict';
 import { carImageUrl, colorChipUrl } from '@/utils/images';
 import { shareText, type ShareOutcome } from '@/utils/share';
 import { buildLeaseShareText } from '@/utils/share-text';
@@ -91,7 +93,7 @@ export default function SummaryScreen() {
   if (isManual) {
     return (
       <ThemedView style={styles.container}>
-        <Stack.Screen options={{ title: '차량 선택 완료' }} />
+        <Stack.Screen options={{ title: t('nav.summary') }} />
         <StudyNotice />
         <ManualBody />
       </ThemedView>
@@ -102,20 +104,20 @@ export default function SummaryScreen() {
   if (!saleModelCode || !specCode) {
     return (
       <ThemedView style={styles.center}>
-        <ThemedText>견적 정보가 없습니다. 가격 화면에서 다시 선택해 주세요.</ThemedText>
+        <ThemedText>{t('summary.noInfo')}</ThemedText>
       </ThemedView>
     );
   }
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: '차량 선택 완료' }} />
+      <Stack.Screen options={{ title: t('nav.summary') }} />
       {/* 앱 기본 제목줄(뒤로 가기 + 제목) 아래에 "학습용" 안내 배너 */}
       <StudyNotice />
       <LoadStatus
         state={state}
-        loadingText="견적을 불러오는 중입니다."
-        errorText="견적을 불러오지 못했습니다."
+        loadingText={t('summary.loading')}
+        errorText={t('summary.error')}
         onRetry={retry}
       />
       {state.status === 'ready' && <SummaryBody params={params} selection={selection} result={state.result} />}
@@ -135,18 +137,18 @@ function ManualBody() {
   return (
     <KeyboardScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.scroll}>
       {/* 맨 위가 바로 차량가격: 직접 입력한다 */}
-      <Section title="차량가격">
+      <Section title={t('summary.vehiclePrice')}>
         <Card>
           <AmountInput
-            label="차량가격 직접 입력"
-            unit="원"
+            label={t('summary.manualLabel')}
+            unit={t('amount.unit')}
             kind="amount"
             value={priceText}
             onChangeText={setPriceText}
-            placeholder="예) 30,000,000"
+            placeholder={t('summary.manualPlaceholder')}
             // PC(웹)에서는 화면이 열리면 바로 차량가격 칸에 커서를 둔다. 폰에서는 키보드가 갑자기 올라오지 않도록 쓰지 않는다.
             autoFocus={Platform.OS === 'web'}
-            hint="차량가격을 입력하면 아래 리스료를 계산할 수 있습니다. 입력한 금액은 저장되지 않습니다."
+            hint={t('summary.manualHint')}
           />
         </Card>
       </Section>
@@ -175,23 +177,23 @@ function SummaryBody({
   const brand = findBrand(params.brand);
   const purpose = trimPurposeName(price.saleModelCode);
   // 엔진 이름과 트림 이름을 공백으로 이어 붙인다. 비어 있는 것은 걸러낸다.
-  const trimLabel = [params.engineName, params.trimName].filter(Boolean).join(' ');
+  const trimLabel = [params.engineName, params.trimName].filter(Boolean).map((name) => translateName(name ?? '')).join(' ');
 
   // 공유 글자에 넣을 차량 정보 줄들 (제조사·차종, 트림, 사양, 옵션, 색상)
   const vehicleLines = [
     `${brand?.name ?? ''} ${params.carName ?? ''}`.trim(),
-    `트림  ${trimLabel}${purpose ? ` (${purpose})` : ''}`,
-    items.spec ? `사양  ${items.spec.name}` : '',
-    items.options.length > 0 ? `옵션  ${items.options.map((o) => o.name).join(', ')}` : '',
-    items.exterior ? `외장  ${items.exterior.name}` : '',
-    items.interior ? `내장  ${items.interior.name}` : '',
+    t('summary.lineTrim', { value: `${trimLabel}${purpose ? ` (${purpose})` : ''}` }),
+    items.spec ? t('summary.lineSpec', { value: translateName(items.spec.name) }) : '',
+    items.options.length > 0 ? t('summary.lineOptions', { value: items.options.map((o) => translateName(o.name)).join(', ') }) : '',
+    items.exterior ? t('summary.lineExterior', { value: translateName(items.exterior.name) }) : '',
+    items.interior ? t('summary.lineInterior', { value: translateName(items.interior.name) }) : '',
   ].filter((line) => line !== '');
 
   // 선택한 사양을 가격 데이터에서 찾지 못하는 비정상 상황의 안내
   if (!items.spec) {
     return (
       <ThemedView style={styles.center}>
-        <ThemedText>선택한 사양을 찾을 수 없습니다. 가격 화면에서 다시 선택해 주세요.</ThemedText>
+        <ThemedText>{t('summary.specNotFound')}</ThemedText>
       </ThemedView>
     );
   }
@@ -201,7 +203,7 @@ function SummaryBody({
       <KeyboardScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.scroll}>
         <DataNotice result={result} />
 
-        <Section title="차량">
+        <Section title={t('summary.vehicle')}>
           <Card>
             {/* 제조사 엠블럼과 이름, 그 아래에 선택한 차종의 이미지 */}
             {brand ? (
@@ -215,30 +217,30 @@ function SummaryBody({
             <ThemedView style={styles.carImageArea}>
               <RemoteImage uri={carImageUrl(params.car)} label={params.carName} style={styles.carImage} />
             </ThemedView>
-            <Line label="제조사" value={brand?.name ?? '-'} />
-            <Line label="차종" value={params.carName || '-'} />
-            <Line label="트림" value={trimLabel || '-'} />
-            <Line label="구매 용도" value={purpose ?? '-'} />
-            <Line label="모델 코드" value={price.saleModelCode} />
+            <Line label={t('summary.brand')} value={brand?.name ?? '-'} />
+            <Line label={t('summary.car')} value={params.carName || '-'} />
+            <Line label={t('summary.trim')} value={trimLabel || '-'} />
+            <Line label={t('summary.purpose')} value={purpose ?? '-'} />
+            <Line label={t('summary.modelCode')} value={price.saleModelCode} />
           </Card>
         </Section>
 
-        <Section title="사양">
+        <Section title={t('summary.spec')}>
           <Card>
-            <Line label={items.spec.name} value={formatPrice(items.spec.price)} />
+            <Line label={translateName(items.spec.name)} value={formatPrice(items.spec.price)} />
           </Card>
         </Section>
 
-        <Section title="선택 옵션">
+        <Section title={t('summary.options')}>
           <Card>
             {items.options.length === 0 ? (
-              <ThemedText themeColor="textSecondary">선택한 옵션 없음</ThemedText>
+              <ThemedText themeColor="textSecondary">{t('summary.noOptions')}</ThemedText>
             ) : (
               items.options.map((option) => (
                 <Line
                   key={option.code}
                   // 튜익스(제조사 추가 옵션)는 일반 옵션과 구별되도록 이름 뒤에 표시를 붙인다.
-                  label={option.kind === 'tuix' ? `${option.name} (추가 옵션)` : option.name}
+                  label={option.kind === 'tuix' ? t('summary.tuixSuffix', { name: translateName(option.name) }) : translateName(option.name)}
                   value={formatExtra(option.price)}
                 />
               ))
@@ -246,17 +248,17 @@ function SummaryBody({
           </Card>
         </Section>
 
-        <Section title="색상">
+        <Section title={t('summary.colors')}>
           <Card>
             {/* 색상을 고르지 않았으면 "선택 안 함"과 가격 자리에 '-'를 보여준다 */}
             <Line
-              label={`내장 · ${items.interior?.name ?? '선택 안 함'}`}
+              label={t('summary.interiorLine', { name: items.interior ? translateName(items.interior.name) : t('summary.notSelected') })}
               value={items.interior ? formatExtra(items.interior.price) : '-'}
               // 고른 색상이 있으면 이름 앞에 그 색상을 동그랗게 보여준다
               swatchUri={items.interior ? (colorChipUrl(params.car, 'interior', items.interior.code) ?? '') : undefined}
             />
             <Line
-              label={`외장 · ${items.exterior?.name ?? '선택 안 함'}`}
+              label={t('summary.exteriorLine', { name: items.exterior ? translateName(items.exterior.name) : t('summary.notSelected') })}
               value={items.exterior ? formatExtra(items.exterior.price) : '-'}
               swatchUri={items.exterior ? (colorChipUrl(params.car, 'exterior', items.exterior.code) ?? '') : undefined}
             />
@@ -264,15 +266,17 @@ function SummaryBody({
         </Section>
 
         {/* 차량 선택 정보의 마지막: 차량가격 (가격 화면의 합계와 같은 계산) */}
-        <Section title="차량가격">
+        <Section title={t('summary.vehiclePrice')}>
           <Card>
-            <Line label="사양" value={formatPrice(breakdown.specPrice)} />
-            <Line label="옵션" value={formatPrice(breakdown.optionsPrice)} />
-            <Line label="색상" value={formatPrice(breakdown.colorsPrice)} />
+            <Line label={t('summary.spec')} value={formatPrice(breakdown.specPrice)} />
+            <Line label={t('summary.optionsShort')} value={formatPrice(breakdown.optionsPrice)} />
+            <Line label={t('summary.colorsShort')} value={formatPrice(breakdown.colorsPrice)} />
             <View style={styles.divider} />
             <View style={styles.totalRow}>
-              <ThemedText type="smallBold">차량가격</ThemedText>
-              <ThemedText type="subtitle" accessibilityLabel={`차량가격 ${formatPrice(breakdown.total)}`}>
+              <ThemedText type="smallBold">{t('summary.vehiclePrice')}</ThemedText>
+              <ThemedText
+                type="subtitle"
+                accessibilityLabel={`${t('summary.vehiclePrice')} ${formatPrice(breakdown.total)}`}>
                 {formatPrice(breakdown.total)}
               </ThemedText>
             </View>
@@ -282,7 +286,7 @@ function SummaryBody({
         {/* 아래쪽: 리스료 계산. 입력이 바뀔 때마다 월 납입금액이 바로 계산된다. */}
         <LeaseSection vehiclePrice={breakdown.total} vehicleLines={vehicleLines} />
 
-        {/* 금액이 보이는 화면에는 항상 "학습용" 안내를 눈에 띄는 색으로 함께 보여준다 (문구는 constants/notices.ts) */}
+        {/* 금액이 보이는 화면에는 항상 "학습용" 안내를 눈에 띄는 색으로 함께 보여준다 (문구는 i18n 의 notice 항목) */}
         <PriceDisclaimer />
       </KeyboardScrollView>
     </>
@@ -371,19 +375,19 @@ function LeaseSection({ vehiclePrice, vehicleLines = [] }: { vehiclePrice: numbe
     );
     setShareNotice(
       outcome === 'copied'
-        ? '견적을 복사했습니다. 붙여넣어서 보내 보세요.'
+        ? t('lease.copied')
         : outcome === 'failed'
-          ? '공유할 수 없습니다. 이 기기나 브라우저에서는 공유 기능을 쓸 수 없습니다.'
+          ? t('lease.shareFailed')
           : '',
     );
   };
 
   return (
-    <Section title="리스료 계산">
+    <Section title={t('lease.title')}>
       <Card>
         {/* 기간: 5개 중 하나만 고르는 버튼 줄 */}
         <View style={styles.field}>
-          <ThemedText type="smallBold">기간 (개월)</ThemedText>
+          <ThemedText type="smallBold">{t('lease.term')}</ThemedText>
           <View style={styles.termRow}>
             {LEASE_TERMS.map((term) => {
               const isSelected = term === termMonths;
@@ -393,7 +397,7 @@ function LeaseSection({ vehiclePrice, vehicleLines = [] }: { vehiclePrice: numbe
                   accessibilityRole="radio"
                   // PC 에서 Tab 키는 입력 칸들만 차례로 이동하도록, 기간 버튼은 Tab 순서에서 뺀다(마우스와 터치로 선택)
                   tabIndex={-1}
-                  accessibilityLabel={`기간 ${term}개월`}
+                  accessibilityLabel={t('lease.termLabel', { term })}
                   accessibilityState={{ selected: isSelected }}
                   onPress={() => setTermMonths(term)}
                   style={[
@@ -414,74 +418,75 @@ function LeaseSection({ vehiclePrice, vehicleLines = [] }: { vehiclePrice: numbe
 
         {/* 선수금, 보증금, 잔존가치: 금액을 직접 입력한다. 아래 [−][+] 버튼으로 차량가격의 5% 단위 금액을 빠르게 넣을 수도 있다. */}
         <AmountPercentField
-          label="선수금"
+          label={t('lease.prepaid')}
           vehiclePrice={vehiclePrice}
           amountText={prepaidText}
           maxAmount={maxPrepaid}
-          limitText="선수금과 보증금의 합은 차량가격보다 작아야 합니다."
+          limitText={t('lease.prepaidDepositLimit')}
           onChangeAmount={(digits) => setPrepaidEdit(clampText(digits, maxPrepaid))}
-          hint="처음에 내는 돈(장기선수금). 기간 동안 나눠서 월 납입금에서 뺍니다."
+          hint={t('lease.prepaidHint')}
         />
         <AmountPercentField
-          label="보증금"
+          label={t('lease.deposit')}
           vehiclePrice={vehiclePrice}
           amountText={depositText}
           maxAmount={maxDeposit}
-          limitText="선수금과 보증금의 합은 차량가격보다 작아야 합니다."
+          limitText={t('lease.prepaidDepositLimit')}
           onChangeAmount={(digits) => setDepositEdit(clampText(digits, maxDeposit))}
-          hint="만기에 돌려받는 돈. 맡긴 돈의 월 이자만큼 월 납입금이 줄어듭니다."
+          hint={t('lease.depositHint')}
         />
         <AmountPercentField
-          label="잔존가치"
+          label={t('lease.residual')}
           vehiclePrice={vehiclePrice}
           amountText={residualText}
           maxAmount={maxResidual}
-          limitText="잔존가치는 차량가격보다 작아야 합니다."
+          limitText={t('lease.residualLimit')}
           onChangeAmount={(digits) => setResidualEdit(clampText(digits, maxResidual))}
-          hint="만기 때 차량의 가치. 클수록 월 납입금이 줄어듭니다."
+          hint={t('lease.residualHint')}
         />
 
         {/* 금리는 직접 입력한다 */}
         <AmountInput
-          label="금리 (연 %)"
+          label={t('lease.rate')}
           unit="%"
           kind="rate"
           value={rateText}
           onChangeText={setRateText}
-          placeholder="예) 5.5"
+          placeholder={t('lease.ratePlaceholder')}
         />
       </Card>
 
       {/* 결과: 월 납입금액. 차량가격이나 금리가 없으면 안내만, 입력이 잘못되면 이유를 보여준다 */}
       <Card>
         {noPrice ? (
-          <ThemedText themeColor="textSecondary">차량가격을 입력해 주세요. 입력하면 월 납입금액을 계산할 수 있습니다.</ThemedText>
+          <ThemedText themeColor="textSecondary">{t('lease.needPrice')}</ThemedText>
         ) : result === null ? (
-          <ThemedText themeColor="textSecondary">금리를 입력해 주세요. 입력하면 월 납입금액이 바로 계산됩니다.</ThemedText>
+          <ThemedText themeColor="textSecondary">{t('lease.needRate')}</ThemedText>
         ) : result.ok ? (
           <>
             <View style={styles.totalRow}>
-              <ThemedText type="smallBold">월 납입금액</ThemedText>
-              <ThemedText type="subtitle" accessibilityLabel={`월 납입금액 ${formatPrice(result.monthlyPayment)}`}>
+              <ThemedText type="smallBold">{t('lease.monthly')}</ThemedText>
+              <ThemedText
+                type="subtitle"
+                accessibilityLabel={t('lease.monthlyLabel', { amount: formatPrice(result.monthlyPayment) })}>
                 {formatPrice(result.monthlyPayment)}
               </ThemedText>
             </View>
             {/* 계산 과정: 기본 리스료에서 선수금 차감과 보증금 효과를 뺀 것이 월 납입금액이다 */}
-            <Line label="기본 리스료" value={formatPrice(result.baseMonthly)} />
-            <Line label="선수금 차감 (선수금 ÷ 기간)" value={`− ${formatPrice(result.prepaidDeduction)}`} />
-            <Line label="보증금 효과 (보증금의 월 이자)" value={`− ${formatPrice(result.depositEffect)}`} />
+            <Line label={t('lease.base')} value={formatPrice(result.baseMonthly)} />
+            <Line label={t('lease.prepaidDeduction')} value={`− ${formatPrice(result.prepaidDeduction)}`} />
+            <Line label={t('lease.depositEffect')} value={`− ${formatPrice(result.depositEffect)}`} />
             <ThemedText type="small" themeColor="textSecondary">
-              부가세, 취득세·등록세, 보험료, 정비·수수료는 포함하지 않은 단순 계산입니다. 실제 금융사 견적과 다를 수
-              있습니다.
+              {t('lease.excluded')}
             </ThemedText>
             {/* 공유하기: 결과를 글자로 보낸다. 복사만 된 경우(PC 웹)에는 아래에 안내를 보여준다 */}
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="견적 공유하기"
+              accessibilityLabel={t('lease.share')}
               onPress={() => onShare(result.monthlyPayment)}
               style={({ pressed }) => [styles.shareButton, { opacity: pressed ? 0.8 : 1 }]}>
               <ThemedText type="smallBold" style={styles.shareButtonText}>
-                견적 공유하기
+                {t('lease.share')}
               </ThemedText>
             </Pressable>
             {shareNotice ? (

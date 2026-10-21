@@ -21,7 +21,8 @@
 /** 차종 (예: 쏘나타 디 엣지) */
 export type Car = {
   code: string; // 예: "DN26"  (트림 목록을 조회할 때 쓰는 열쇠)
-  name: string; // 화면에 보여줄 이름
+  name: string; // 제조사가 준 한글 이름
+  engName?: string; // 영문 슬러그 (예: "sonata-the-edge"). 영어 화면의 이름으로 쓴다. 예전 저장본에는 없을 수 있다
 };
 
 /** 트림 (예: 가솔린 2.0 Premium). saleModelCode로 가격과 옵션을 조회한다. */

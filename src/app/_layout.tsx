@@ -18,6 +18,7 @@
 // ============================================================================
 
 import { DarkTheme, DefaultTheme, ThemeProvider, Stack } from 'expo-router';
+import { useSyncExternalStore } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
@@ -33,16 +34,26 @@ import {
   OG_IMAGE_URL,
   SITE_NAME,
 } from '@/constants/site';
+import { detectLocale, setLocale, t, type Locale } from '@/i18n';
 
 // 앱이 시작될 때 보이는 스플래시(로고) 화면을, 첫 화면이 준비될 때까지 자동으로 닫지 않고 붙잡아 둔다.
 SplashScreen.preventAutoHideAsync();
 
+// 기기 언어는 앱이 켜져 있는 동안 바뀌지 않는다고 보고, 변경을 알려 줄 일이 없다.
+const subscribeNothing = () => () => {};
+const serverLocale = (): Locale => 'ko';
+
 export default function RootLayout() {
   // 기기가 라이트 모드인지 다크 모드인지 알려 준다. ('light' | 'dark' | null 등)
   const colorScheme = useColorScheme();
+  // 기기(브라우저) 언어. useSyncExternalStore 는 웹의 미리 만든 HTML 을 처음 그릴 때는 세 번째 함수의 값('ko')을 쓰고,
+  // 곧바로 실제 언어로 다시 그려 준다. (i18n/index.ts 설명 참고) 앱에서는 처음부터 실제 언어를 쓴다.
+  // 언어가 바뀌면 아래 화면 전체를 key 로 새로 그려서 모든 문구가 새 언어로 바뀐다.
+  const locale = useSyncExternalStore(subscribeNothing, detectLocale, serverLocale);
+  setLocale(locale);
   return (
     // ThemeProvider: 헤더와 배경색 같은 화면 공통 색을 라이트/다크에 맞춰 바꿔 준다.
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider key={locale} value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AnimatedSplashOverlay />
       {/*
         웹 전용 기본 head. 모든 페이지에 적용된다. (앱에서는 아무것도 하지 않는다)
@@ -82,11 +93,11 @@ export default function RootLayout() {
       {/* screenOptions: 모든 화면 공통 옵션. headerRight = 제목줄 오른쪽 끝의 작은 회사 로고 (헤더를 끈 화면에는 보이지 않음) */}
       <Stack screenOptions={{ headerRight: () => <HeaderLogo /> }}>
         <Stack.Screen name="index" options={{ headerShown: false, title: LANDING_TITLE }} />
-        <Stack.Screen name="brands" options={{ headerShown: false, title: '제조사 선택' }} />
-        <Stack.Screen name="cars" options={{ title: '차종 선택', headerBackTitle: '제조사' }} />
-        <Stack.Screen name="trims" options={{ title: '트림 선택' }} />
-        <Stack.Screen name="price" options={{ title: '가격 확인' }} />
-        <Stack.Screen name="summary" options={{ title: '차량 선택 완료' }} />
+        <Stack.Screen name="brands" options={{ headerShown: false, title: t('nav.brands') }} />
+        <Stack.Screen name="cars" options={{ title: t('nav.cars'), headerBackTitle: t('nav.carsBack') }} />
+        <Stack.Screen name="trims" options={{ title: t('nav.trims') }} />
+        <Stack.Screen name="price" options={{ title: t('nav.price') }} />
+        <Stack.Screen name="summary" options={{ title: t('nav.summary') }} />
       </Stack>
     </ThemeProvider>
   );

@@ -6,6 +6,7 @@
 // ============================================================================
 
 import { ThemedText } from '@/components/themed-text';
+import { t } from '@/i18n';
 import type { LoadResult } from '@/storage/cache';
 
 /** 데이터를 가져온 날짜와, 이전 저장본/저장 실패 안내를 보여준다. */
@@ -13,12 +14,12 @@ export function DataNotice({ result }: { result: LoadResult<unknown> }) {
   // result.source 가 'stale-cache' 면 "새로 가져오기에 실패해서 옛 저장본을 보여주는 중"이라는 뜻이다. (src/storage/cache.ts)
   const base =
     result.source === 'stale-cache'
-      ? `인터넷에 연결할 수 없어 ${result.fetchedDate}에 저장한 데이터를 보여줍니다. (${result.errorMessage})`
-      : `데이터 기준일: ${result.fetchedDate}`;
+      ? t('dataNotice.stale', { date: result.fetchedDate, reason: result.errorMessage })
+      : t('dataNotice.asOf', { date: result.fetchedDate });
   return (
     <ThemedText type="small" themeColor="textSecondary">
       {base}
-      {result.saveFailed ? ' (기기에 저장하지 못했습니다.)' : ''}
+      {result.saveFailed ? t('dataNotice.saveFailed') : ''}
     </ThemedText>
   );
 }

@@ -1,5 +1,7 @@
 // 트림 표시용 보조 함수.
 
+import { t } from '@/i18n';
+
 /**
  * 현대자동차 모델 코드의 3번째 글자는 구매 용도와 같다. (J 자가용, R 렌터카, H 장애인)
  * 제조사 API의 구매 용도 목록(자가용 J / 렌터카 R / 장애인 H)과 글자가 일치하고, H 트림은 운전 방식 사양
@@ -10,15 +12,20 @@
  *     (글자 번호는 0부터 센다. 0번 'F', 1번 'N', 2번 'H')
  * 이름이 같은 트림("모던"이 두 개 등)을 사용자가 구분할 수 있게 목록에 용도를 함께 보여주는 데 쓴다.
  */
-export function trimPurposeName(saleModelCode: string): '자가용' | '렌터카' | '장애인' | null {
+export function trimPurposeName(saleModelCode: string): string | null {
   switch (saleModelCode[2]) {
     case 'J':
-      return '자가용';
+      return t('trims.purposePrivate');
     case 'R':
-      return '렌터카';
+      return t('trims.purposeRental');
     case 'H':
-      return '장애인';
+      return t('trims.purposeDisabled');
     default:
       return null;
   }
+}
+
+/** 자가용 트림인가. (자가용이 아닌 트림만 제목에 용도를 덧붙이는 데 쓴다) */
+export function isPrivateTrim(saleModelCode: string): boolean {
+  return saleModelCode[2] === 'J';
 }

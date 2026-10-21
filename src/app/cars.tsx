@@ -23,7 +23,9 @@ import { ThemedView } from '@/components/themed-view';
 import { findBrand } from '@/constants/brands';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useLoad } from '@/hooks/use-load';
+import { t } from '@/i18n';
 import { getCars } from '@/storage/vehicleData';
+import { carDisplayName } from '@/utils/car-name';
 import { carImageUrl } from '@/utils/images';
 
 export default function CarsScreen() {
@@ -46,7 +48,7 @@ export default function CarsScreen() {
   if (!brand) {
     return (
       <ThemedView style={styles.center}>
-        <ThemedText>지원하지 않는 제조사입니다.</ThemedText>
+        <ThemedText>{t('cars.unsupportedBrand')}</ThemedText>
       </ThemedView>
     );
   }
@@ -54,14 +56,14 @@ export default function CarsScreen() {
   return (
     <ThemedView style={styles.container}>
       {/* 제목줄 글자를 이 화면 안에서 동적으로 정한다 (제조사 이름이 들어간다) */}
-      <Stack.Screen options={{ title: `${brand.name} 차종` }} />
+      <Stack.Screen options={{ title: t('cars.title', { brand: brand.name }) }} />
       {/* 앱 기본 제목줄(뒤로 가기 + 제목) 아래에 "학습용" 안내 배너 */}
       <StudyNotice />
       {/* 불러오는 중이거나 오류일 때만 무언가를 그리고, 완료(ready)면 아무것도 그리지 않는다 */}
       <LoadStatus
         state={state}
-        loadingText="차종을 불러오는 중입니다."
-        errorText="차종을 불러오지 못했습니다."
+        loadingText={t('cars.loading')}
+        errorText={t('cars.error')}
         onRetry={retry}
       />
       {/* && : 앞의 조건이 참일 때만 뒤의 화면을 그린다. 불러오기가 끝났을 때만 목록을 보여준다. */}
@@ -80,14 +82,14 @@ export default function CarsScreen() {
             // 카드 하나. 2열일 때는 두 카드가 같은 폭을 나눠 가진다(flex: 1).
             <ThemedView style={styles.cell}>
               <CarCard
-                name={item.name}
+                name={carDisplayName(item)}
                 imageUri={carImageUrl(item.code)}
                 // 다음 화면(트림)에 차종 코드(car)와 이름(carName)을 넘긴다.
                 // 코드는 트림 조회와 이미지·색상 이미지 주소를 만드는 데, 이름은 제목과 마지막 화면에 쓴다.
                 onPress={() =>
                   router.push({
                     pathname: '/trims',
-                    params: { brand: brand.id, car: item.code, carName: item.name },
+                    params: { brand: brand.id, car: item.code, carName: carDisplayName(item) },
                   })
                 }
               />
@@ -101,7 +103,7 @@ export default function CarsScreen() {
           }
           // 목록이 비었을 때 보여줄 것
           ListEmptyComponent={
-            <ThemedText themeColor="textSecondary">표시할 차종이 없습니다.</ThemedText>
+            <ThemedText themeColor="textSecondary">{t('cars.empty')}</ThemedText>
           }
         />
       )}

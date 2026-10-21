@@ -4,8 +4,10 @@
 // 학습용 앱이므로 "실제 견적이 아니다"라는 문구를 반드시 끝에 넣는다.
 // ============================================================================
 
+import { KRW_PER_USD } from '@/constants/currency';
 import { SITE_URL } from '@/constants/site';
-import { formatPrice } from '@/utils/price';
+import { t } from '@/i18n';
+import { formatPrice, withCommas } from '@/utils/price';
 
 export type ShareTextInput = {
   vehicleLines: string[]; // 차량 정보 줄들 (직접 입력 모드에서는 빈 배열)
@@ -28,22 +30,22 @@ function amountWithPercent(amount: number, vehiclePrice: number): string {
 
 export function buildLeaseShareText(input: ShareTextInput): string {
   const { vehicleLines, vehiclePrice, termMonths, prepaid, deposit, residual, annualRatePercent, monthlyPayment } = input;
-  const lines: string[] = ['🚗 리스료 견적 (학습용)', LINE];
+  const lines: string[] = [t('share.title'), LINE];
   if (vehicleLines.length > 0) {
     lines.push(...vehicleLines, '');
   }
   lines.push(
-    `💰 차량가격  ${formatPrice(vehiclePrice)}`,
+    t('share.price', { amount: formatPrice(vehiclePrice) }),
     '',
-    `📅 기간  ${termMonths}개월`,
-    `선수금  ${amountWithPercent(prepaid, vehiclePrice)}`,
-    `보증금  ${amountWithPercent(deposit, vehiclePrice)}`,
-    `잔존가치  ${amountWithPercent(residual, vehiclePrice)}`,
-    `금리  연 ${annualRatePercent}%`,
+    t('share.term', { months: termMonths }),
+    t('share.prepaid', { value: amountWithPercent(prepaid, vehiclePrice) }),
+    t('share.deposit', { value: amountWithPercent(deposit, vehiclePrice) }),
+    t('share.residual', { value: amountWithPercent(residual, vehiclePrice) }),
+    t('share.rate', { rate: annualRatePercent }),
     LINE,
-    `✅ 월 납입금액  ${formatPrice(monthlyPayment)}`,
+    t('share.monthly', { amount: formatPrice(monthlyPayment) }),
     LINE,
-    '※ 학습용 참고 금액입니다. 실제 견적과 다를 수 있으며, 부가세·취득세·보험료·수수료는 포함하지 않았습니다.',
+    t('share.footnote', { rate: withCommas(KRW_PER_USD) }),
     SITE_URL,
   );
   return lines.join('\n');

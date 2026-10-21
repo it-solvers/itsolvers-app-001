@@ -16,13 +16,16 @@
 import { useCallback, useRef, useState } from 'react';
 
 import { fetchDisabledTuix, fetchOptionRules, fetchRequiredOptions } from '@/api/hyundai';
+import { t } from '@/i18n';
 import type { TrimPrice } from '@/types/car';
 import { addWithRequired, blockedChoiceCodes, removeWithDependents } from '@/utils/options';
+import { translateName } from '@/utils/name-dict';
 import { isOptionAvailable, type Selection } from '@/utils/price';
 
 // 옵션이 비활성일 때 화면에 보여줄 이유 문구
-const REASON_CHOICE = '지금 선택한 옵션 조합에서는 고를 수 없습니다';
-const REASON_TUIX = '선택한 옵션·색상·추가 옵션과 함께 고를 수 없습니다';
+// (언어는 화면이 열린 뒤에 정해지므로, 상수가 아니라 부를 때마다 문구를 가져오는 함수로 둔다)
+const reasonChoice = () => t('options.reasonChoice');
+const reasonTuix = () => t('options.reasonTuix');
 
 /** 화면을 처음 열었을 때의 선택 상태: 추가금이 없는 사양(기본)만 골라져 있고 옵션/색상은 비어 있다. */
 function initialSelection(price: TrimPrice): Selection {
@@ -58,7 +61,7 @@ export function useOptionSelection(price: TrimPrice) {
   const busyRef = useRef(false); // 조회 중에 다시 눌러도 선택이 꼬이지 않게 막는다
 
   // 옵션 코드로 이름/종류를 찾는 작은 도우미 함수
-  const nameOf = (code: string) => price.options.find((o) => o.code === code)?.name ?? code;
+  const nameOf = (code: string) => translateName(price.options.find((o) => o.code === code)?.name ?? code);
   const kindOf = (code: string) => price.options.find((o) => o.code === code)?.kind;
 
   // ---- 핵심: 새 선택(next)을 검증하고 적용한다 ----
@@ -101,14 +104,14 @@ export function useOptionSelection(price: TrimPrice) {
       // 못 고르는 옵션들을 "코드 → 이유" 표로 정리한다.
       blocked = {};
       for (const code of blockedChoiceCodes(price.options, current.specCode, current.optionCodes, optionRules)) {
-        blocked[code] = REASON_CHOICE;
+        blocked[code] = reasonChoice();
       }
-      for (const code of disabledTuix) blocked[code] = REASON_TUIX;
+      for (const code of disabledTuix) blocked[code] = reasonTuix();
 
       // 이미 선택했는데 지금은 못 고르게 된 튜익스가 있으면 선택에서 빼고, 안내 문구를 남기고 다시 확인한다.
       const dropped = tuixSelected.filter((code) => blocked[code]);
       if (dropped.length === 0) break;
-      notes.push(`함께 고를 수 없어 선택이 해제됨: ${dropped.map(nameOf).join(', ')}`);
+      notes.push(t('options.droppedTogether', { names: dropped.map(nameOf).join(', ') }));
       current = { ...current, optionCodes: current.optionCodes.filter((c) => !dropped.includes(c)) };
     }
     // 여기까지 오류 없이 왔을 때만 실제 상태를 바꾼다.
@@ -132,11 +135,7 @@ export function useOptionSelection(price: TrimPrice) {
     try {
       await task();
     } catch (error) {
-      setRuleError(
-        `옵션 조건을 확인하지 못해 선택을 바꾸지 않았습니다. 인터넷 연결을 확인하고 다시 눌러 주세요. (${
-          error instanceof Error ? error.message : String(error)
-        })`,
-      );
+      setRuleError(t('options.checkFailed', { reason: error instanceof Error ? error.message : String(error) }));
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -153,7 +152,7 @@ export function useOptionSelection(price: TrimPrice) {
         return option ? isOptionAvailable(option, specCode) : false;
       });
       const removed = selection.optionCodes.filter((code) => !kept.includes(code));
-      const notes = removed.length > 0 ? [`선택한 사양에서 고를 수 없어 해제됨: ${removed.map(nameOf).join(', ')}`] : [];
+      const notes = removed.length > 0 ? [t('options.removedBySpec', { names: removed.map(nameOf).join(', ') })] : [];
       await applySelection({ ...selection, specCode, optionCodes: kept }, notes);
     });
 
@@ -172,7 +171,7 @@ export function useOptionSelection(price: TrimPrice) {
         // 1) 해제
         const { remaining, alsoRemoved } = removeWithDependents(price.options, selection.optionCodes, code);
         optionCodes = remaining;
-        if (alsoRemoved.length > 0) notes.push(`함께 선택이 해제됨: ${alsoRemoved.map(nameOf).join(', ')}`);
+        if (alsoRemoved.length > 0) notes.push(t('options.alsoRemoved', { names: alsoRemoved.map(nameOf).join(', ') }));
       } else if (kindOf(code) === 'choice') {
         // 2) 일반 옵션 추가
         const required = await fetchRequiredOptions(
@@ -189,7 +188,7 @@ export function useOptionSelection(price: TrimPrice) {
         optionCodes = addWithRequired(selection.optionCodes, code, addable);
         // 사용자가 직접 누른 것이 아니라 "덩달아 선택된" 옵션을 안내 문구에 알려준다.
         const together = optionCodes.filter((c) => c !== code && !selection.optionCodes.includes(c));
-        if (together.length > 0) notes.push(`함께 선택됨: ${together.map(nameOf).join(', ')}`);
+        if (together.length > 0) notes.push(t('options.selectedTogether', { names: together.map(nameOf).join(', ') }));
       } else {
         // 3) 튜익스 추가
         optionCodes = [...selection.optionCodes, code];

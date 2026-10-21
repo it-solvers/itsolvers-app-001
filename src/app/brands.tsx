@@ -15,6 +15,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BRANDS } from '@/constants/brands';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { t } from '@/i18n';
 
 export default function BrandsScreen() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function BrandsScreen() {
   return (
     <ThemedView style={styles.container}>
       {/* 맨 위: 로고 헤더(뒤로 가기 포함) + "학습용" 배너 + 화면 제목 */}
-      <ScreenTop title="제조사 선택" />
+      <ScreenTop title={t('nav.brands')} />
       {/*
         FlatList: 긴 목록을 효율적으로 그리는 도구. 화면에 보이는 항목만 그려서 항목이 많아도 가볍다.
           data                  보여줄 배열
@@ -54,13 +55,13 @@ export default function BrandsScreen() {
               제목은 기능을 그대로 알려 주고(화면 낭독에도 읽힌다), 아래 보조 글에 가벼운 농담을 담았다.
             */}
             <ListRow
-              title="차량가격 직접 입력"
-              subtitle="차는 패스! 가격만 쏙 넣으세요 💸"
+              title={t('brands.manualTitle')}
+              subtitle={t('brands.manualSubtitle')}
               leading={<CoinLogo />}
               onPress={() => router.push({ pathname: '/summary', params: { manual: '1' } })}
             />
             <ThemedText type="small" themeColor="textSecondary">
-              현재는 현대자동차 승용차만 지원합니다. 다른 제조사는 추후 추가할 예정입니다.
+              {t('brands.onlyHyundai')}
             </ThemedText>
           </ThemedView>
         }

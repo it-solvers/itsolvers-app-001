@@ -13,6 +13,7 @@
 // 저장(하루 1회 규칙)은 src/storage/ 가, 화면 표시는 src/app/ 이 맡는다.
 // ============================================================================
 
+import { t } from '@/i18n';
 import type { Car, CarColor, CarOption, Spec, Trim, TrimPrice } from '@/types/car';
 
 const BASE_URL = 'https://www.hyundai.com/kr/ko/e/api/product';
@@ -44,11 +45,11 @@ async function get<T>(path: string, params: Record<string, string> = {}): Promis
   try {
     response = await fetch(url);
   } catch {
-    throw new HyundaiApiError('네트워크에 연결할 수 없습니다.');
+    throw new HyundaiApiError(t('api.network'));
   }
   // 2단계: HTTP 상태 확인. 200대가 아니면(404, 500 등) 서버 쪽 문제다.
   if (!response.ok) {
-    throw new HyundaiApiError(`서버 응답 오류 (${response.status})`);
+    throw new HyundaiApiError(t('api.server', { status: response.status }));
   }
 
   // 3단계: 응답을 JSON 으로 읽기. 글자가 JSON 이 아니면(사이트가 오류 페이지를 줄 때 등) 여기서 실패한다.
@@ -56,12 +57,12 @@ async function get<T>(path: string, params: Record<string, string> = {}): Promis
   try {
     body = (await response.json()) as ApiResponse<T>;
   } catch {
-    throw new HyundaiApiError('응답을 읽을 수 없습니다. 사이트가 바뀌었을 수 있습니다.');
+    throw new HyundaiApiError(t('api.unreadable'));
   }
   // 4단계: 제조사가 "성공"이라고 했는지 확인. rspCode '0000' 이 성공이고 data 가 있어야 한다.
   // 필수 인자가 빠진 경우 등에는 data 가 null 이고 rspMessage 에 이유가 들어 있다.
   if (body.rspStatus?.rspCode !== '0000' || body.data == null) {
-    throw new HyundaiApiError(body.rspStatus?.rspMessage ?? '데이터가 없습니다.');
+    throw new HyundaiApiError(body.rspStatus?.rspMessage ?? t('api.noData'));
   }
   return body.data;
 }
@@ -75,7 +76,7 @@ function toNumber(value: unknown, label: string): number {
   const n = Number(value);
   // Number(null) 과 Number('') 은 0이 되어 버리므로, 비어 있는 값을 따로 막는다.
   if (value === null || value === '' || !Number.isFinite(n)) {
-    throw new HyundaiApiError(`가격 형식이 올바르지 않습니다. (${label})`);
+    throw new HyundaiApiError(t('api.badPrice', { label }));
   }
   return n;
 }
@@ -88,7 +89,7 @@ function toOptionalPrice(value: unknown, label: string): number {
 /** 배열이어야 하는 값이 배열이 아니면 오류. (응답 형식이 달라졌는지 일찍 알아채기 위한 검사) */
 function requireArray<T>(value: T[] | null | undefined, label: string): T[] {
   if (!Array.isArray(value)) {
-    throw new HyundaiApiError(`응답 형식이 달라졌습니다. (${label})`);
+    throw new HyundaiApiError(t('api.badShape', { label }));
   }
   return value;
 }
@@ -96,14 +97,14 @@ function requireArray<T>(value: T[] | null | undefined, label: string): T[] {
 // ---- 1. 차종 목록 ----
 
 // 제조사 응답에서 우리가 쓰는 필드만 적은 타입. (응답에는 더 많은 필드가 있지만 쓰지 않는 것은 적지 않는다)
-type CarItem = { carCode: string; carName: string; carTypeCode: string };
+type CarItem = { carCode: string; carName: string; carEngName?: string; carTypeCode: string };
 
 /** 승용차 차종 목록을 가져온다. */
 export async function fetchCars(): Promise<Car[]> {
   const data = await get<CarItem[]>('/car/catalog-price');
-  return requireArray(data, '차종 목록')
+  return requireArray(data, t('api.labelCars'))
     .filter((c) => c.carTypeCode === PASSENGER_TYPE_CODE) // 승용만 (SUV, 상용 등 제외)
-    .map((c) => ({ code: c.carCode, name: c.carName })); // 응답 이름 → 앱 이름으로 번역
+    .map((c) => ({ code: c.carCode, name: c.carName, engName: c.carEngName })); // 응답 이름 → 앱 이름으로 번역
 }
 
 // ---- 2. 트림 목록 ----
@@ -121,9 +122,9 @@ export async function fetchTrims(carCode: string): Promise<Trim[]> {
   });
   // 엔진 코드 → 엔진 이름 표(Map)를 만들어 두고, 트림마다 이름을 찾아 붙인다.
   const engineNames = new Map(
-    requireArray(data.engineTypes, '엔진 목록').map((e) => [e.carEnginCode, e.carEnginName]),
+    requireArray(data.engineTypes, t('api.labelEngines')).map((e) => [e.carEnginCode, e.carEnginName]),
   );
-  return requireArray(data.trimList, '트림 목록').map((t) => ({
+  return requireArray(data.trimList, t('api.labelTrims')).map((t) => ({
     saleModelCode: t.saleModelCode,
     name: t.trimName,
     engineCode: t.engineTypeCd,
@@ -185,7 +186,7 @@ export async function fetchTrimPrice(saleModelCode: string): Promise<TrimPrice> 
   ]);
 
   // 사양: 가격이 숫자여야 하므로 toNumber 로 검사하며 바꾼다.
-  const specs: Spec[] = requireArray(data.classChoice, '사양 목록').map((s) => ({
+  const specs: Spec[] = requireArray(data.classChoice, t('api.labelSpecs')).map((s) => ({
     code: s.saleSpecCode,
     name: s.saleModelName,
     price: toNumber(s.carPrice, s.saleModelName),
@@ -194,7 +195,7 @@ export async function fetchTrimPrice(saleModelCode: string): Promise<TrimPrice> 
 
   // 일반 옵션: "A,N" 같은 쉼표 글자를 배열로 쪼개고(split) 앞뒤 공백을 지운다(trim).
   // 묶음 코드가 없으면(null) 자기 자신만 묶음으로 본다.
-  const choiceOptions: CarOption[] = requireArray(data.optionChoice, '선택 옵션').map((o) => ({
+  const choiceOptions: CarOption[] = requireArray(data.optionChoice, t('api.labelChoiceOptions')).map((o) => ({
     code: o.choiceOptionCode,
     name: o.choiceOptionName,
     price: toNumber(o.choiceOptionPrice, o.choiceOptionName),
@@ -204,7 +205,7 @@ export async function fetchTrimPrice(saleModelCode: string): Promise<TrimPrice> 
   }));
   // 튜익스(제조사 추가 옵션)에는 사양 제한 정보가 없어 모든 사양에서 고를 수 있는 것으로 둔다.
   const allSpecCodes = specs.map((s) => s.code);
-  const tuixOptions: CarOption[] = requireArray(data.optionTuix, '튜익스 옵션').map((o) => ({
+  const tuixOptions: CarOption[] = requireArray(data.optionTuix, t('api.labelTuixOptions')).map((o) => ({
     code: o.tuixOptionCode,
     name: o.tuixOptionName,
     price: toNumber(o.tuixOptionPrice, o.tuixOptionName),
@@ -215,7 +216,7 @@ export async function fetchTrimPrice(saleModelCode: string): Promise<TrimPrice> 
 
   // choiceYn이 "Y"인 색상만 이 트림에서 고를 수 있다.
   // 색상 가격은 차종에 따라 필드가 없을 수 있어 toOptionalPrice 로 읽는다(없으면 0원).
-  const interiorColors: CarColor[] = requireArray(interior, '내장 색상')
+  const interiorColors: CarColor[] = requireArray(interior, t('api.labelInterior'))
     .filter((c) => c.choiceYn === 'Y')
     .map((c) => ({
       code: c.interiorColorCode,
@@ -223,7 +224,7 @@ export async function fetchTrimPrice(saleModelCode: string): Promise<TrimPrice> 
       price: toOptionalPrice(c.interiorColorPrice, c.interiorColorName),
     }));
 
-  const exteriorColors: CarColor[] = requireArray(exterior, '외장 색상')
+  const exteriorColors: CarColor[] = requireArray(exterior, t('api.labelExterior'))
     .filter((c) => c.choiceYn === 'Y')
     .map((c) => ({
       code: c.exteriorColorCode,
@@ -288,8 +289,8 @@ export async function fetchOptionRules(
     get<{ optionCode: string }[]>(`/add-possible-option/${saleModelCode}`, params),
   ]);
   return {
-    disabled: requireArray(disabled, '비활성 옵션').map((o) => o.optionCode),
-    enabled: requireArray(enabled, '활성 옵션').map((o) => o.optionCode),
+    disabled: requireArray(disabled, t('api.labelDisabled')).map((o) => o.optionCode),
+    enabled: requireArray(enabled, t('api.labelEnabled')).map((o) => o.optionCode),
   };
 }
 
@@ -330,7 +331,7 @@ export async function fetchDisabledTuix(saleModelCode: string, input: TuixRuleIn
   const [checked, conflicts] = await Promise.all([check, conflict]);
   // 두 규칙의 결과(고를 수 없는 튜익스 코드들)를 하나의 목록으로 합친다.
   return [
-    ...requireArray(checked, '튜익스 확인').map((t) => t.tuixOptionCode),
-    ...requireArray(conflicts, '튜익스 충돌').map((t) => t.tuixCode),
+    ...requireArray(checked, t('api.labelTuixCheck')).map((t) => t.tuixOptionCode),
+    ...requireArray(conflicts, t('api.labelTuixConflict')).map((t) => t.tuixCode),
   ];
 }

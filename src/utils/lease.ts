@@ -22,6 +22,8 @@
 // [넣지 않은 것] 부가세, 취득세·등록세, 보험료, 정비·수수료. 단순 계산이다.
 // ============================================================================
 
+import { t } from '@/i18n';
+
 /** 선택할 수 있는 리스 기간(개월) */
 export const LEASE_TERMS = [12, 24, 36, 48, 60] as const;
 export type LeaseTerm = (typeof LEASE_TERMS)[number];
@@ -55,13 +57,13 @@ export type LeaseResult =
 function validate(input: LeaseInput): string | null {
   const { vehiclePrice, termMonths, prepaid, deposit, residual, annualRatePercent } = input;
   const numbers = [vehiclePrice, termMonths, prepaid, deposit, residual, annualRatePercent];
-  if (!numbers.every(Number.isFinite)) return '입력값에 숫자가 아닌 값이 있습니다.';
-  if (vehiclePrice <= 0) return '차량가격이 0원 이하입니다. 차량 선택을 확인해 주세요.';
-  if (!Number.isInteger(termMonths) || termMonths <= 0) return '기간을 선택해 주세요.';
-  if (prepaid < 0 || deposit < 0 || residual < 0) return '선수금, 보증금, 잔존가치는 0원 이상이어야 합니다.';
-  if (annualRatePercent < 0 || annualRatePercent > 100) return '금리는 0% 이상 100% 이하로 입력해 주세요.';
-  if (residual > vehiclePrice) return '잔존가치는 차량가격을 넘을 수 없습니다.';
-  if (prepaid + deposit > vehiclePrice) return '선수금과 보증금의 합은 차량가격을 넘을 수 없습니다.';
+  if (!numbers.every(Number.isFinite)) return t('lease.errNotNumber');
+  if (vehiclePrice <= 0) return t('lease.errPriceZero');
+  if (!Number.isInteger(termMonths) || termMonths <= 0) return t('lease.errTerm');
+  if (prepaid < 0 || deposit < 0 || residual < 0) return t('lease.errNegative');
+  if (annualRatePercent < 0 || annualRatePercent > 100) return t('lease.errRate');
+  if (residual > vehiclePrice) return t('lease.errResidualOver');
+  if (prepaid + deposit > vehiclePrice) return t('lease.errPrepaidDepositOver');
   return null;
 }
 
@@ -86,7 +88,7 @@ export function calcLeasePayment(input: LeaseInput): LeaseResult {
   const monthly = base - prepaid - deposit;
 
   if (!Number.isFinite(monthly) || monthly <= 0) {
-    return { ok: false, error: '입력하신 값으로는 월 납입금액이 0원 이하가 됩니다. 값을 확인해 주세요.' };
+    return { ok: false, error: t('lease.errMonthlyZero') };
   }
   return { ok: true, monthlyPayment: monthly, baseMonthly: base, prepaidDeduction: prepaid, depositEffect: deposit };
 }

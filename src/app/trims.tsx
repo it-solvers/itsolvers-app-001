@@ -22,8 +22,10 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useLoad } from '@/hooks/use-load';
 import { getTrims } from '@/storage/vehicleData';
 import type { Trim } from '@/types/car';
+import { t } from '@/i18n';
 import { carImageUrl } from '@/utils/images';
-import { trimPurposeName } from '@/utils/trim';
+import { translateName } from '@/utils/name-dict';
+import { isPrivateTrim, trimPurposeName } from '@/utils/trim';
 
 // SectionList 가 요구하는 묶음 모양: 제목(title)과 그 아래 항목들(data)
 type Section = { title: string; data: Trim[] };
@@ -34,7 +36,7 @@ type Section = { title: string; data: Trim[] };
 function groupByEngine(trims: Trim[]): Section[] {
   const sections = new Map<string, Section>();
   for (const trim of trims) {
-    const section = sections.get(trim.engineCode) ?? { title: trim.engineName, data: [] };
+    const section = sections.get(trim.engineCode) ?? { title: translateName(trim.engineName), data: [] };
     section.data.push(trim);
     sections.set(trim.engineCode, section);
   }
@@ -45,8 +47,8 @@ function groupByEngine(trims: Trim[]): Section[] {
 // 예) "디 올 뉴 아반떼 가솔린 모던 (장애인)"
 function priceTitle(carName: string | undefined, trim: Trim): string {
   const purpose = trimPurposeName(trim.saleModelCode);
-  const suffix = purpose && purpose !== '자가용' ? ` (${purpose})` : '';
-  return `${carName ?? ''} ${trim.engineName} ${trim.name}${suffix}`.trim();
+  const suffix = purpose && !isPrivateTrim(trim.saleModelCode) ? ` (${purpose})` : '';
+  return `${carName ?? ''} ${translateName(trim.engineName)} ${translateName(trim.name)}${suffix}`.trim();
 }
 
 export default function TrimsScreen() {
@@ -67,20 +69,20 @@ export default function TrimsScreen() {
   if (!car) {
     return (
       <ThemedView style={styles.center}>
-        <ThemedText>차종 정보가 없습니다.</ThemedText>
+        <ThemedText>{t('trims.noCar')}</ThemedText>
       </ThemedView>
     );
   }
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: carName ?? '트림 선택' }} />
+      <Stack.Screen options={{ title: carName ?? t('nav.trims') }} />
       {/* 앱 기본 제목줄(뒤로 가기 + 제목) 아래에 "학습용" 안내 배너 */}
       <StudyNotice />
       <LoadStatus
         state={state}
-        loadingText="트림을 불러오는 중입니다."
-        errorText="트림을 불러오지 못했습니다."
+        loadingText={t('trims.loading')}
+        errorText={t('trims.error')}
         onRetry={retry}
       />
       {state.status === 'ready' && (
@@ -100,10 +102,10 @@ export default function TrimsScreen() {
           )}
           renderItem={({ item }) => (
             <ListRow
-              title={item.name}
+              title={translateName(item.name)}
               // 같은 이름의 트림이 있어서(자가용/장애인용 등) 구매 용도와 모델 코드를 함께 보여준다.
               // filter(Boolean) 은 용도를 알 수 없어 null 인 항목을 걸러낸다.
-              subtitle={[trimPurposeName(item.saleModelCode), `모델 코드 ${item.saleModelCode}`]
+              subtitle={[trimPurposeName(item.saleModelCode), t('trims.modelCode', { code: item.saleModelCode })]
                 .filter(Boolean)
                 .join(' · ')}
               // 가격 화면에는 트림 코드(saleModelCode)로 가격을 조회하고, 나머지는 제목과
@@ -134,7 +136,7 @@ export default function TrimsScreen() {
             </ThemedView>
           }
           ListEmptyComponent={
-            <ThemedText themeColor="textSecondary">표시할 트림이 없습니다.</ThemedText>
+            <ThemedText themeColor="textSecondary">{t('trims.empty')}</ThemedText>
           }
         />
       )}

@@ -39,9 +39,10 @@
 ```
 src/app/         화면과 라우팅 (파일 이름 = 주소). 로고 헤더는 시작·제조사 화면만 쓰고, 제조사 이후 화면은 앱 기본 제목줄을 쓴다. +html.tsx(웹 HTML 틀), _layout.tsx(스택), index.tsx(시작/랜딩), brands.tsx(제조사), cars.tsx(차종), trims.tsx(트림), price.tsx(가격), summary.tsx(차량 선택 완료)
 src/components/  여러 화면에서 쓰는 UI 조각: list-row, select-row(선택 행), section(제목이 붙은 구역), load-status(로딩/오류), data-notice(데이터 기준일), study-notice("학습용" 안내 배너와 하단 문구), web-head(웹 head 지정), site-header/screen-top(시작·제조사 화면의 헤더 틀. site-footer는 시작 화면만 사용), car-card(차량 카드), brand-logo(제조사 엠블럼), header-logo(제목줄 오른쪽의 작은 회사 로고), coin-logo("차량가격 직접 입력" 줄의 금빛 동전 로고), amount-percent-field(선수금·보증금·잔존가치 카드: 금액 입력 칸 + 비율 슬라이더), percent-slider(비율 슬라이더 본체. 손잡이 위 확대 글자와 눈금 점 확대 효과), color-dot(색상 동그라미), remote-image(인터넷 이미지), amount-input(숫자 입력 칸), 스플래시용 animated-icon
-src/constants/   템플릿 테마 값, brands.ts(지원 제조사 목록), site.ts(웹 검색/공유 정보), notices.ts(학습용 안내 문구)
+src/constants/   템플릿 테마 값, brands.ts(지원 제조사 목록), site.ts(웹 검색/공유 정보), notices.ts(미사용, 문구는 i18n으로 이동)
+src/i18n/        한국어/영어 문구(ko.ts, en.ts)와 `t()` 함수(index.ts). 화면 글자는 여기서 가져온다
 src/hooks/       use-load(화면 데이터 불러오기), use-option-selection(사양·옵션·색상 선택과 선택 규칙), 템플릿 훅(색상 테마 등)
-src/utils/       price.ts(가격 표시, 선택한 항목 목록, 합계 계산), options.ts(옵션 선택 목록 변경 규칙), trim.ts(트림 구매 용도), lease.ts(리스료 계산과 입력 글자 정리), images.ts(제조사 이미지 주소)
+src/utils/       price.ts(가격 표시, 선택한 항목 목록, 합계 계산), options.ts(옵션 선택 목록 변경 규칙), trim.ts(트림 구매 용도), lease.ts(리스료 계산과 입력 글자 정리), images.ts(제조사 이미지 주소), car-name.ts(영어 차종 이름), name-dict.ts(영어 이름 단어 사전)
 src/api/         제조사 사이트 호출 코드 (hyundai.ts). 화면에서 fetch를 직접 쓰지 않는다
 src/storage/     저장 코드. cache.ts(JSON 파일 저장, 하루 1회 규칙), vehicleData.ts(화면이 호출하는 getCars/getTrims/getTrimPrice)
 src/types/       공통 TypeScript 타입 (car.ts: 차종/트림/사양/옵션/색상/가격)
@@ -182,6 +183,17 @@ docs/            APP_SPEC.md, ARCHITECTURE.md
 - 제조사 엠블럼: `/static/images/logo_mobile_black.png`(검은색이라 흰 바탕 위에 놓는다).
 - 이미지가 없거나 불러오지 못해도 화면은 정상이다(`RemoteImage`가 빈 자리나 회색으로 처리).
 - 이 주소들은 공개된 약속이 아니라 사이트가 쓰는 것을 확인한 것이라 바뀔 수 있다. 제조사의 엠블럼과 이미지는 저작물·상표이므로 학습용 안내와 함께 쓰고 수정하거나 재배포하지 않는다.
+
+## 8-3. 한국어/영어 (2026-10-21)
+
+- 패키지: `expo-localization`(기기 언어 읽기), `i18n-js`(문구 꺼내기). 언어 선택 버튼은 없고 기기·브라우저 언어를 따른다(한국어면 `ko`, 그 밖은 `en`).
+- 문구는 `src/i18n/ko.ts`와 `en.ts`에 있다. 두 파일의 키는 같아야 하고, `en.ts`의 타입(`typeof ko`)이 빠진 키를 컴파일 때 알려 준다. 화면에서는 `t('cars.loading')`처럼 쓴다. 번역이 없으면 한국어로 보인다.
+- 금액: 계산은 모두 원화로 하고, 보여줄 때만 `formatPrice`가 바꾼다. 한국어는 `28,760,000원`, 영어는 고정 환율 `KRW_PER_USD = 1400`(`constants/currency.ts`, 실시간 환율 아님)으로 환산해 `$20,543`(1달러 미만 반올림)으로 보여준다. 환산 사실은 금액이 보이는 화면 하단 안내(`notice.price`)와 공유 글자 끝에 "₩1,400 = $1"로 알린다. 입력 칸(차량가격 직접 입력, 선수금, 보증금, 잔존가치)도 영어에서는 달러로 받는다. 앱 안의 값은 항상 원 단위 숫자 글자이고, `AmountInput`이 보여줄 때 `wonDigitsToShown`(원→달러), 입력받을 때 `shownToWonDigits`(달러→원, ×1400)로 바꾼다. 그래서 슬라이더, 한도(clamp), 계산은 원화 기준 그대로다.
+- 차종 이름: 현대 응답의 `carEngName`(예 `sonata-the-edge`)을 `Car.engName`으로 저장하고, 영어일 때 `carDisplayName()`이 하이픈을 공백으로, 단어 첫 글자를 대문자로 바꿔 보여준다. 저장본에 `engName`이 없으면 한글 이름을 쓴다.
+- 색상·사양·옵션·트림·엔진 이름: 현대 이름이 대부분 영어를 한글로 소리 나는 대로 쓴 것이라, `utils/name-dict.ts`의 단어 사전(`translateName`)으로 단어별로 바꾼다("어비스 블랙 펄" → "Abyss Black Pearl", "왼손오른발장애" → "Left hand · Right foot (Disability)"). 사전에 없는 단어(예: 고요, 더블라셀)는 한글로 남고, 새 이름이 나와도 앱은 깨지지 않는다. 한글이 보이면 `WORDS`에 한 줄 추가한다. 2026-10-21 기준 현대 6개 차종의 전체 트림에서 모은 이름은 "고요"와 "더블라셀"만 빼고 모두 바뀌는 것을 확인했다.
+- 번역하지 않는 것: 현대 서버가 보낸 오류 문구(한글 그대로).
+- 웹: 미리 만든 HTML(한국어)과 첫 화면이 같아야 해서, 처음에는 항상 한국어로 그린 뒤 `_layout.tsx`가 브라우저 언어로 바꾼다(`useSyncExternalStore`). 앱(iOS/Android)은 처음부터 기기 언어로 그린다.
+- 하지 않은 것: 웹 검색용 메타데이터·구조화 데이터·푸터의 영어화, 링크 주소로 언어 지정(`?lang=en`).
 
 ## 9. 의도적으로 하지 않는 것
 

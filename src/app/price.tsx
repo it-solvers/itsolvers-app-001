@@ -29,9 +29,11 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useLoad } from '@/hooks/use-load';
 import { useOptionSelection } from '@/hooks/use-option-selection';
 import { useTheme } from '@/hooks/use-theme';
+import { t } from '@/i18n';
 import type { LoadResult } from '@/storage/cache';
 import { getTrimPrice } from '@/storage/vehicleData';
 import type { TrimPrice } from '@/types/car';
+import { translateName } from '@/utils/name-dict';
 import { carImageUrl, colorChipUrl } from '@/utils/images';
 import { calcBreakdown, formatExtra, formatPrice, isOptionAvailable } from '@/utils/price';
 
@@ -63,20 +65,20 @@ export default function PriceScreen() {
   if (!saleModelCode) {
     return (
       <ThemedView style={styles.center}>
-        <ThemedText>트림 정보가 없습니다.</ThemedText>
+        <ThemedText>{t('priceScreen.noTrim')}</ThemedText>
       </ThemedView>
     );
   }
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: '가격 확인' }} />
+      <Stack.Screen options={{ title: t('nav.price') }} />
       {/* 앱 기본 제목줄(뒤로 가기 + 제목) 아래에 "학습용" 안내 배너 */}
       <StudyNotice />
       <LoadStatus
         state={state}
-        loadingText="가격을 불러오는 중입니다."
-        errorText="가격을 불러오지 못했습니다."
+        loadingText={t('priceScreen.loading')}
+        errorText={t('priceScreen.error')}
         onRetry={retry}
       />
       {state.status === 'ready' && (
@@ -132,14 +134,18 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
         <DataNotice result={result} />
 
         {/* 사양: 하나만 고르는 라디오 버튼 */}
-        <Section title="사양">
+        <Section title={t('priceScreen.specs')}>
           {price.specs.map((spec) => (
             <SelectRow
               key={spec.code}
               mode="radio"
-              title={spec.name}
+              title={translateName(spec.name)}
               rightText={formatPrice(spec.price)}
-              subtitle={spec.extraPrice === 0 ? '기본 사양' : `기본 사양 대비 ${formatExtra(spec.extraPrice)}`}
+              subtitle={
+                spec.extraPrice === 0
+                  ? t('priceScreen.baseSpec')
+                  : t('priceScreen.versusBase', { extra: formatExtra(spec.extraPrice) })
+              }
               selected={selection.specCode === spec.code}
               onPress={() => selectSpec(spec.code)}
             />
@@ -148,15 +154,15 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
 
         {/* 선택 옵션: 여러 개를 고르는 체크박스 */}
         <Section
-          title="선택 옵션"
-          hint={busy ? '옵션 선택 조건을 확인하는 중입니다...' : undefined}>
+          title={t('priceScreen.options')}
+          hint={busy ? t('priceScreen.optionsChecking') : undefined}>
           {message ? (
             <ThemedText type="small" themeColor="textSecondary">
               {message}
             </ThemedText>
           ) : null}
           {price.options.length === 0 && (
-            <ThemedText themeColor="textSecondary">선택할 수 있는 옵션이 없습니다.</ThemedText>
+            <ThemedText themeColor="textSecondary">{t('priceScreen.noOptions')}</ThemedText>
           )}
           {price.options.map((option) => {
             // specOk: 지금 고른 사양에서 쓸 수 있는 옵션인가
@@ -168,11 +174,11 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
               <SelectRow
                 key={option.code}
                 mode="check"
-                title={option.name}
+                title={translateName(option.name)}
                 rightText={formatExtra(option.price)}
                 // 보조 문구: 이 사양에서 못 쓰는 옵션이면 그 안내를, 쓸 수 있는 옵션이면 (선택하지 않았고 못 고르는
                 // 이유가 있을 때만) 그 이유를 보여준다.
-                subtitle={specOk ? (selected ? undefined : reason) : '선택한 사양에서는 고를 수 없습니다'}
+                subtitle={specOk ? (selected ? undefined : reason) : t('priceScreen.notForSpec')}
                 // 선택된 옵션은 언제나 해제할 수 있어야 한다.
                 disabled={!specOk || (!selected && !!reason)}
                 selected={selected}
@@ -183,12 +189,12 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
         </Section>
 
         {/* 색상: 같은 색을 다시 누르면 선택이 해제된다 (선택하지 않으면 색상 가격이 합계에 들어가지 않는다) */}
-        <Section title="내장 색상" hint="한 번 더 누르면 선택이 해제됩니다. 선택하지 않으면 합계에 색상 가격이 포함되지 않습니다.">
+        <Section title={t('priceScreen.interior')} hint={t('priceScreen.colorHintInterior')}>
           {price.interiorColors.map((color) => (
             <SelectRow
               key={color.code}
               mode="radio"
-              title={color.name}
+              title={translateName(color.name)}
               rightText={formatExtra(color.price)}
               // 색상 이름 앞에 해당 색상을 동그랗게 보여준다 (제조사의 색상 칩 이미지)
               swatchUri={colorChipUrl(trim.car, 'interior', color.code) ?? ''}
@@ -198,12 +204,12 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
           ))}
         </Section>
 
-        <Section title="외장 색상" hint="한 번 더 누르면 선택이 해제됩니다.">
+        <Section title={t('priceScreen.exterior')} hint={t('priceScreen.colorHintExterior')}>
           {price.exteriorColors.map((color) => (
             <SelectRow
               key={color.code}
               mode="radio"
-              title={color.name}
+              title={translateName(color.name)}
               rightText={formatExtra(color.price)}
               swatchUri={colorChipUrl(trim.car, 'exterior', color.code) ?? ''}
               selected={selection.exteriorCode === color.code}
@@ -223,13 +229,17 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
           </ThemedText>
         ) : null}
         <ThemedView type="backgroundElement" style={styles.totalRow}>
-          <ThemedText type="smallBold">합계</ThemedText>
-          <ThemedText type="subtitle" accessibilityLabel={`합계 ${formatPrice(breakdown.total)}`}>
+          <ThemedText type="smallBold">{t('priceScreen.total')}</ThemedText>
+          <ThemedText type="subtitle" accessibilityLabel={t('priceScreen.totalLabel', { amount: formatPrice(breakdown.total) })}>
             {formatPrice(breakdown.total)}
           </ThemedText>
         </ThemedView>
         <ThemedText type="small" themeColor="textSecondary">
-          {`사양 ${formatPrice(breakdown.specPrice)} + 옵션 ${formatPrice(breakdown.optionsPrice)} + 색상 ${formatPrice(breakdown.colorsPrice)}`}
+          {t('priceScreen.breakdown', {
+            spec: formatPrice(breakdown.specPrice),
+            options: formatPrice(breakdown.optionsPrice),
+            colors: formatPrice(breakdown.colorsPrice),
+          })}
         </ThemedText>
         {/*
           차량 선택 완료 버튼. 지금 고른 내용을 주소 값으로 만들어 다음 화면에 넘긴다.
@@ -254,9 +264,9 @@ function PriceBody({ title, trim, result }: { title: string; trim: TrimInfo; res
             })
           }
           style={[styles.summaryButton, { opacity: busy ? 0.5 : 1 }]}>
-          <ThemedText style={styles.summaryButtonText}>{busy ? '옵션 조건 확인 중...' : '차량 선택 완료'}</ThemedText>
+          <ThemedText style={styles.summaryButtonText}>{busy ? t('priceScreen.doneChecking') : t('priceScreen.done')}</ThemedText>
         </Pressable>
-        {/* 금액이 보이는 화면에는 항상 "학습용" 안내를 눈에 띄는 색으로 함께 보여준다 (문구는 constants/notices.ts) */}
+        {/* 금액이 보이는 화면에는 항상 "학습용" 안내를 눈에 띄는 색으로 함께 보여준다 (문구는 i18n 의 notice 항목) */}
         <PriceDisclaimer />
       </ThemedView>
     </>

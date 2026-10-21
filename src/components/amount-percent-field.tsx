@@ -16,6 +16,7 @@ import { PercentSlider } from '@/components/percent-slider';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { t } from '@/i18n';
 import { percentAmount } from '@/utils/lease';
 import { formatPrice } from '@/utils/price';
 
@@ -65,7 +66,7 @@ export function AmountPercentField({ label, vehiclePrice, amountText, onChangeAm
       <AmountInput
         showLabel={false}
         label={label}
-        unit="원"
+        unit={t('amount.unit')}
         kind="amount"
         value={amountText}
         onChangeText={onChangeAmount}
@@ -74,13 +75,13 @@ export function AmountPercentField({ label, vehiclePrice, amountText, onChangeAm
       />
       {atLimit ? (
         <ThemedText type="small" style={styles.limitText} accessibilityRole="alert">
-          {`${limitText ?? ''} 최대 ${formatPrice(maxAmount ?? 0)}까지 입력할 수 있습니다.`.trim()}
+          {t('amount.maxHint', { limit: limitText ?? '', max: formatPrice(maxAmount ?? 0) }).trim()}
         </ThemedText>
       ) : null}
       {/* 도구: 비율 슬라이더. 손잡이는 입력한 금액에서 거꾸로 계산한 비율에 놓인다 */}
       <View style={styles.sliderHead}>
         <ThemedText type="small" themeColor="textSecondary">
-          차량가격 대비 비율
+          {t('amount.percentOfPrice')}
         </ThemedText>
       </View>
       <PercentSlider

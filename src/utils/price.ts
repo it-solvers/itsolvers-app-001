@@ -7,20 +7,46 @@
 // 그리고 가격 화면과 차량 선택 완료 화면이 같은 함수를 쓰므로 두 화면의 합계가 어긋날 수 없다.
 // ============================================================================
 
+import { KRW_PER_USD } from '@/constants/currency';
+import { getLocale, t } from '@/i18n';
 import type { CarColor, CarOption, Spec, TrimPrice } from '@/types/car';
 
-/** 28760000 -> "28,760,000원" */
-export function formatPrice(price: number): string {
+/** 숫자에 세 자리마다 쉼표를 넣는다. 28760000 -> "28,760,000" */
+export function withCommas(value: number): string {
   // 정규식 \B(?=(\d{3})+(?!\d)) 풀이:
   //   (?=(\d{3})+(?!\d))  "뒤에 숫자가 3의 배수 개만큼 이어지고 그 뒤에는 숫자가 없는" 위치
   //   \B                  단어 경계가 아닌 위치 (= 숫자 사이)
   // 즉 "오른쪽 끝에서부터 세 자리마다" 쉼표를 넣을 위치를 찾아 ','로 바꾼다.
-  return `${String(price).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원`;
+  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+/**
+ * 화면에 보여줄 금액. 한국어는 "28,760,000원", 영어는 고정 환율(constants/currency.ts)로 환산한 "$20,543".
+ * 계산은 모두 원화로 하고, 보여주는 순간에만 환산한다. (달러는 1달러 미만을 반올림한다)
+ */
+export function formatPrice(price: number): string {
+  const shown = getLocale() === 'en' ? Math.round(price / KRW_PER_USD) : price;
+  return t('price.format', { amount: withCommas(shown) });
+}
+
+/**
+ * 금액 입력 칸에 보여줄 숫자 글자. 앱 안에서는 금액을 원 단위 숫자 글자로 들고 있고, 영어일 때만 달러로 환산해 보여준다.
+ * 예) 영어에서 "28000000" → "20000"
+ */
+export function wonDigitsToShown(wonDigits: string): string {
+  if (getLocale() !== 'en' || wonDigits === '') return wonDigits;
+  return String(Math.round(Number(wonDigits) / KRW_PER_USD));
+}
+
+/** 입력 칸에 사용자가 친 숫자 글자를 앱 안의 원 단위 숫자 글자로 되돌린다. 영어에서 "20000" → "28000000" */
+export function shownToWonDigits(digits: string): string {
+  if (getLocale() !== 'en' || digits === '') return digits;
+  return String(Number(digits) * KRW_PER_USD);
 }
 
 /** 추가 금액 표시: 0이면 "추가 금액 없음", 아니면 "+100,000원" */
 export function formatExtra(price: number): string {
-  return price === 0 ? '추가 금액 없음' : `+${formatPrice(price)}`;
+  return price === 0 ? t('price.extraNone') : `+${formatPrice(price)}`;
 }
 
 /**
