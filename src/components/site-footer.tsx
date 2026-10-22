@@ -9,12 +9,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { COPYRIGHT, FOOTER_LINES } from '@/constants/site';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export function SiteFooter() {
   // 아래쪽 홈 바에 가려지지 않도록 안전 영역만큼 여백을 더한다.
   const insets = useSafeAreaInsets();
+  // 다크 모드 푸터는 회사 사이트 색상표의 #09090a
+  const background = useColorScheme() === 'dark' ? '#09090a' : '#111827';
   return (
-    <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.three }]}>
+    <View style={[styles.footer, { backgroundColor: background, paddingBottom: insets.bottom + Spacing.three }]}>
       <View style={styles.inner}>
         {FOOTER_LINES.map((line, index) => (
           // 첫 줄(회사 이름)만 굵게, 나머지는 앞에 구분선(|)을 붙이고 흐리게 보인다 (회사 사이트와 같은 표현)
@@ -29,7 +32,7 @@ export function SiteFooter() {
 }
 
 const styles = StyleSheet.create({
-  footer: { backgroundColor: '#111827', paddingTop: Spacing.three },
+  footer: { paddingTop: Spacing.three },
   inner: {
     paddingHorizontal: Spacing.three,
     maxWidth: MaxContentWidth,

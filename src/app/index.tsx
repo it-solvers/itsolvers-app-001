@@ -22,7 +22,7 @@ import {
   SITE_NAME,
   SITE_URL,
 } from '@/constants/site';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { t } from '@/i18n';
 
@@ -96,7 +96,7 @@ export default function LandingScreen() {
       {/* ScrollView: 글자가 커지거나 화면이 작아도 내용이 잘리지 않고 스크롤되게 한다 */}
       <ScrollView
         // 본문 영역 배경: 회사 사이트 첫 화면(hero)처럼 라이트는 옅은 파랑 흰색, 다크는 짙은 남색
-        style={{ backgroundColor: isDark ? '#0f172a' : '#f8faff' }}
+        style={{ backgroundColor: isDark ? Colors.dark.background : '#f8faff' }}
         contentContainerStyle={styles.scroll}>
         <ThemedView style={styles.hero}>
           <ThemedText type="subtitle" style={styles.heading}>

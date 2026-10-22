@@ -16,11 +16,13 @@ export const Colors = {
     textSecondary: '#60646C',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    // 회사 사이트 다크 모드 색상표를 따랐다 (페이지 #26282b, 카드 #2c2e32, 제목 #e4e4e4, 보조 #a8abae).
+    // backgroundSelected(눌림, 테두리)는 색상표에 없어서 카드보다 한 단계 밝게 정했다.
+    text: '#e4e4e4',
+    background: '#26282b',
+    backgroundElement: '#2c2e32',
+    backgroundSelected: '#3a3d42',
+    textSecondary: '#a8abae',
   },
 } as const;
 

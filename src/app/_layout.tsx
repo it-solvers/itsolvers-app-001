@@ -34,6 +34,7 @@ import {
   OG_IMAGE_URL,
   SITE_NAME,
 } from '@/constants/site';
+import { Colors } from '@/constants/theme';
 import { detectLocale, setLocale, t, type Locale } from '@/i18n';
 
 // 앱이 시작될 때 보이는 스플래시(로고) 화면을, 첫 화면이 준비될 때까지 자동으로 닫지 않고 붙잡아 둔다.
@@ -42,6 +43,18 @@ SplashScreen.preventAutoHideAsync();
 // 기기 언어는 앱이 켜져 있는 동안 바뀌지 않는다고 보고, 변경을 알려 줄 일이 없다.
 const subscribeNothing = () => () => {};
 const serverLocale = (): Locale => 'ko';
+
+// 헤더(제목줄)와 화면 배경 색을 앱 색상표(constants/theme.ts)와 맞춘다. 기본 DarkTheme 은 순수 검정에 가깝다.
+const AppDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: Colors.dark.background,
+    card: Colors.dark.backgroundElement,
+    text: Colors.dark.text,
+    border: Colors.dark.backgroundSelected,
+  },
+};
 
 export default function RootLayout() {
   // 기기가 라이트 모드인지 다크 모드인지 알려 준다. ('light' | 'dark' | null 등)
@@ -53,7 +66,7 @@ export default function RootLayout() {
   setLocale(locale);
   return (
     // ThemeProvider: 헤더와 배경색 같은 화면 공통 색을 라이트/다크에 맞춰 바꿔 준다.
-    <ThemeProvider key={locale} value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider key={locale} value={colorScheme === 'dark' ? AppDarkTheme : DefaultTheme}>
       <AnimatedSplashOverlay />
       {/*
         웹 전용 기본 head. 모든 페이지에 적용된다. (앱에서는 아무것도 하지 않는다)
