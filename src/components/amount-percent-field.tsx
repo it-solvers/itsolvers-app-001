@@ -58,7 +58,7 @@ export function AmountPercentField({ label, vehiclePrice, amountText, onChangeAm
 
   return (
     // 항목마다 따로 보이는 카드. 큰 제목으로 어느 항목의 입력인지 분명히 한다.
-    <View style={[styles.wrapper, { backgroundColor: theme.background, borderColor: theme.backgroundSelected }]}>
+    <View style={[styles.wrapper, { backgroundColor: theme.backgroundInput, borderColor: theme.backgroundSelected }]}>
       <ThemedText type="subtitle" style={styles.title} accessibilityRole="header">
         {label}
       </ThemedText>

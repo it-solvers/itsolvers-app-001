@@ -13,6 +13,7 @@ export const Colors = {
     background: '#ffffff',
     backgroundElement: '#F0F0F3',
     backgroundSelected: '#E0E1E6',
+    backgroundInput: '#ffffff',
     textSecondary: '#60646C',
   },
   dark: {
@@ -22,6 +23,7 @@ export const Colors = {
     background: '#26282b',
     backgroundElement: '#2c2e32',
     backgroundSelected: '#3a3d42',
+    backgroundInput: '#232528', // 카드(#2c2e32) 안에서 입력 칸이 구분되도록 카드보다 살짝 어둡게
     textSecondary: '#a8abae',
   },
 } as const;

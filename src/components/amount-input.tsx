@@ -51,7 +51,7 @@ export function AmountInput({ label, unit, kind, value, onChangeText, placeholde
         ref={fieldRef}
         style={[
           styles.field,
-          { backgroundColor: theme.background, borderColor: focused ? FOCUS_COLOR : theme.backgroundSelected },
+          { backgroundColor: theme.backgroundInput, borderColor: focused ? FOCUS_COLOR : theme.backgroundSelected },
         ]}>
         <TextInput
           // 화면 낭독 기능이 칸의 이름을 읽을 수 있게 한다
